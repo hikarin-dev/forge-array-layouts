@@ -46,6 +46,11 @@ body {
 }
 .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
 h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 3vw, 2.1rem); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gh { display: inline-flex; align-items: center; gap: 8px; flex: none; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); text-decoration: none; font: 600 13px/1 var(--font-body); }
+.gh:hover { border-color: var(--accent); color: var(--accent); }
+.gh:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 480px) { .gh span { display: none; } }
 .lede { margin: 6px 0 0; color: var(--muted); max-width: 70ch; }
 .lede b { color: var(--fg); font-weight: 600; }
 .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -89,9 +94,10 @@ td.name { font-weight: 600; }
 .legend { display: grid; gap: 8px; font-size: 13px; color: var(--muted); }
 .legend div { display: flex; align-items: center; gap: 10px; }
 .legend svg { flex: none; }
-.small { display: grid; gap: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
-.small h2 { font-family: var(--font-display); font-size: 1.45rem; margin: 0; line-height: 1.2; }
-.small > p { margin: 0; color: var(--muted); max-width: 75ch; }
+.picker { display: grid; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.picker-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.picker-head strong { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; }
+.picker-head span { color: var(--muted); font-size: 13px; }
 .controls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
 .seg button, .counts button {
@@ -101,23 +107,28 @@ td.name { font-weight: 600; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button[aria-pressed="true"], .counts button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
 .counts { display: flex; flex-wrap: wrap; gap: 6px; }
-.counts button { font-family: var(--font-mono); min-width: 38px; padding: 8px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
-.counts button:hover, .seg button:hover { color: var(--fg); }
-.counts button[aria-pressed="true"]:hover, .seg button[aria-pressed="true"]:hover { color: var(--surface); }
+.counts button { display: grid; gap: 3px; justify-items: center; min-width: 54px; padding: 7px 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.counts button b { font: 600 14px/1 var(--font-mono); color: var(--fg); }
+.counts button small { font: 400 10.5px/1 var(--font-mono); color: var(--muted); }
+.counts button.best small { color: var(--accent); font-weight: 600; }
+.counts button[aria-pressed="true"] b, .counts button[aria-pressed="true"] small { color: var(--surface); }
+.counts button:hover { border-color: var(--accent); }
+.seg button:hover { color: var(--fg); }
+.seg button[aria-pressed="true"]:hover { color: var(--surface); }
 .seg button:focus-visible, .counts button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.small-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
-@media (max-width: 860px) { .small-grid { grid-template-columns: minmax(0, 1fr); } }
-.small-grid .diagram { display: grid; gap: 8px; }
-.small-grid .diagram figcaption { font-size: 13px; color: var(--muted); padding: 2px 4px 0; }
-.small table { min-width: 520px; }
-.tier-list { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
 .foot { color: var(--muted); font-size: 13px; max-width: 80ch; display: grid; gap: 6px; }
 .foot p { margin: 0; }
 </style>
 
 <div class="wrap">
   <header>
-    <h1>Forge Array Layouts</h1>
+    <div class="title-row">
+      <h1>Forge Array Layouts</h1>
+      <a class="gh" href="https://github.com/hikarin-dev/forge-array-layouts" target="_blank" rel="noopener" aria-label="Source code on GitHub" title="Source code on GitHub">
+        <svg viewBox="0 0 16 16" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>GitHub</span>
+      </a>
+    </div>
     <p class="lede">Optimal Forge of Luminance placements for one <b>65 × 65</b> build region, solved exactly as an integer program. Projection areas stay inside the region; forges may sit outside it. Every forge burns <b>6 Xiragen/min</b>, so efficiency is items produced per Xiragen.</p>
   </header>
 
@@ -127,6 +138,20 @@ td.name { font-weight: 600; }
       <tbody id="rows"></tbody>
     </table>
   </div>
+
+  <section class="picker" aria-labelledby="small-title">
+    <div class="picker-head">
+      <strong id="small-title">Smaller builds</strong>
+      <span>The best standalone layout for exactly 1 to 11 forges. Each button shows its items per Xiragen.</span>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Forge type">
+        <button type="button" id="kind-bipolar" data-kind="bipolar" aria-pressed="true">Bipolar</button>
+        <button type="button" id="kind-single" data-kind="single" aria-pressed="false">Single</button>
+      </div>
+      <div class="counts" id="counts" role="group" aria-label="Forge count"></div>
+    </div>
+  </section>
 
   <section class="stage">
     <div class="diagram"><svg id="plot" role="img" aria-label="Layout diagram"></svg></div>
@@ -142,30 +167,6 @@ td.name { font-weight: 600; }
         <div><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="2" width="18" height="18" fill="none" stroke="var(--muted)" stroke-dasharray="3 2"/></svg>65 × 65 build region</div>
       </div>
     </aside>
-  </section>
-
-  <section class="small" aria-labelledby="small-title">
-    <h2 id="small-title">Smaller builds</h2>
-    <p>The best standalone layout for exactly 1 to 11 forges, each solved on its own, so no two builds share an area. With Bipolars, even counts form one diagonal chain, and an odd count hangs its extra forge off the end.</p>
-    <div class="controls">
-      <div class="seg" role="group" aria-label="Forge type">
-        <button type="button" id="kind-bipolar" data-kind="bipolar" aria-pressed="true">Bipolar</button>
-        <button type="button" id="kind-single" data-kind="single" aria-pressed="false">Single</button>
-      </div>
-      <div class="counts" id="counts" role="group" aria-label="Forge count"></div>
-    </div>
-    <div class="small-grid">
-      <figure class="diagram" style="margin:0">
-        <svg id="small-plot" role="img" aria-label="Small build diagram"></svg>
-        <figcaption id="small-caption"></figcaption>
-      </figure>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Forges</th><th>Areas</th><th>Xiragen/min</th><th>Output/min</th><th>Items per Xiragen</th></tr></thead>
-          <tbody id="small-rows"></tbody>
-        </table>
-      </div>
-    </div>
   </section>
 
   <div class="foot">
@@ -251,54 +252,45 @@ function draw(l, svgId = 'plot', crop = false) {
   svg.setAttribute('aria-label', `${l.name}: ${l.F} forges, ${l.areas.length} areas`);
 }
 
-// Smaller builds: one standalone layout per forge count.
-let smallKind = 'bipolar', smallF = 10;
-const smallBest = kind => Math.max(...SMALL[kind].map(l => l.ipx));
-function tierText(l) {
-  const c = {};
-  l.areas.forEach(a => { c[a[2]] = (c[a[2]] || 0) + 1; });
-  return Object.keys(c).sort((a, b) => b - a).map(k => `${c[k] > 1 ? c[k] + '×' : ''}T${k}`).join(' ');
-}
-function renderSmall() {
-  const list = SMALL[smallKind], best = smallBest(smallKind);
+// Both pickers drive one diagram. `current` is what it shows:
+// { type: 'main', i } for a table row, { type: 'small', kind, F } for a count.
+let current = null, smallKind = 'bipolar', smallF = 10;
+
+function renderCounts() {
+  const list = SMALL[smallKind];
+  const best = Math.max(...list.map(l => l.ipx));
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === smallKind)));
-  document.getElementById('counts').innerHTML = list.map(l =>
-    `<button type="button" data-f="${l.F}" aria-pressed="${l.F === smallF}" aria-label="${l.F} forge${l.F > 1 ? 's' : ''}">${l.F}</button>`).join('');
-  document.getElementById('small-rows').innerHTML = list.map(l => `
-    <tr tabindex="0" data-f="${l.F}" aria-selected="${l.F === smallF}">
-      <td class="num">${l.F}</td>
-      <td class="tier-list">${tierText(l)}</td>
-      <td class="num">${l.xiragen}</td>
-      <td class="num">${fmt(l.out)}</td>
-      <td class="num"><span class="eff ${l.ipx === best ? 'best' : ''}">${l.ipx.toFixed(2)}<i><b style="width:${(l.ipx / 12.5 * 100).toFixed(1)}%"></b></i></span></td>
-    </tr>`).join('');
-  const l = list.find(x => x.F === smallF);
-  draw(l, 'small-plot', true);
-  document.getElementById('small-caption').textContent =
-    `${l.name}: ${fmt(l.out)} items/min on ${l.xiragen} Xiragen/min, ${l.ipx.toFixed(2)} items per Xiragen.`;
+  document.getElementById('counts').innerHTML = list.map(l => {
+    const on = current?.type === 'small' && l.F === smallF;
+    return `<button type="button" data-f="${l.F}" class="${l.ipx === best ? 'best' : ''}" aria-pressed="${on}"
+      aria-label="${l.F} forge${l.F > 1 ? 's' : ''}, ${l.ipx.toFixed(2)} items per Xiragen"><b>${l.F}</b><small>${l.ipx.toFixed(2)}</small></button>`;
+  }).join('');
 }
-document.querySelector('.seg').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  smallKind = b.dataset.kind; renderSmall();
-});
-document.getElementById('counts').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  smallF = +b.dataset.f; renderSmall();
-  document.querySelector(`#counts button[data-f="${smallF}"]`).focus();
-});
-const smallRows = document.getElementById('small-rows');
-smallRows.addEventListener('click', e => { const r = e.target.closest('tr'); if (r) { smallF = +r.dataset.f; renderSmall(); } });
-smallRows.addEventListener('keydown', e => {
-  const r = e.target.closest('tr'); if (!r) return;
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); smallF = +r.dataset.f; renderSmall(); smallRows.querySelector(`tr[data-f="${smallF}"]`).focus(); }
-});
-renderSmall();
+
+function smallNote(kind, F) {
+  const what = `The best standalone layout for exactly ${F} ${kind === 'bipolar' ? 'Bipolar' : 'single'} forge${F > 1 ? 's' : ''}, solved on its own.`;
+  if (kind === 'bipolar') return `${what} ${F % 2 ? 'The odd forge hangs off the end of a diagonal chain.' : 'Even counts form one diagonal chain.'}`;
+  return `${what} Four single forges around one area make a T4.`;
+}
+
+function selectSmall(kind, F) {
+  smallKind = kind; smallF = F;
+  current = { type: 'small', kind, F };
+  rows.querySelectorAll('tr[data-i]').forEach(r => r.setAttribute('aria-selected', 'false'));
+  renderCounts();
+  show(SMALL[kind].find(l => l.F === F), smallNote(kind, F), false, `#${kind}-${F}`);
+}
 
 function select(i) {
-  const l = LAYOUTS[i];
-  rows.querySelectorAll('tr').forEach(r => r.setAttribute('aria-selected', String(+r.dataset.i === i)));
+  current = { type: 'main', i };
+  rows.querySelectorAll('tr[data-i]').forEach(r => r.setAttribute('aria-selected', String(+r.dataset.i === i)));
+  renderCounts();
+  show(LAYOUTS[i], LAYOUTS[i].note, false, '#' + slug(LAYOUTS[i].name));
+}
+
+function show(l, note, crop, hash) {
   document.getElementById('title').textContent = l.name;
-  document.getElementById('note').textContent = l.note;
+  document.getElementById('note').textContent = note;
   const wasted = l.poles.filter(p => !p[3]).length;
   document.getElementById('stats').innerHTML = [
     ['Forges', `${l.F} ${l.kind === 'bipolar' ? 'Bipolar' : 'single'}`],
@@ -312,10 +304,18 @@ function select(i) {
   l.areas.forEach(a => { counts[a[2]] = (counts[a[2]] || 0) + 1; });
   document.getElementById('tiers').innerHTML = Object.keys(counts).sort((a, b) => b - a)
     .map(k => `<span class="tier" style="opacity:${[0, 0.55, 0.7, 0.85, 1][k]}">${counts[k]} × T${k}</span>`).join('');
-  draw(l);
-  const h = '#' + slug(l.name);
-  if (location.hash !== h) history.replaceState(null, '', h);
+  draw(l, 'plot', crop);
+  if (location.hash !== hash) history.replaceState(null, '', hash);
 }
+
+document.querySelector('.seg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (b) selectSmall(b.dataset.kind, smallF);
+});
+document.getElementById('counts').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  selectSmall(smallKind, +b.dataset.f);
+  document.querySelector(`#counts button[data-f="${smallF}"]`).focus();
+});
 
 rows.addEventListener('click', e => { const r = e.target.closest('tr[data-i]'); if (r) select(+r.dataset.i); });
 rows.addEventListener('keydown', e => {
@@ -328,6 +328,8 @@ rows.addEventListener('keydown', e => {
   }
 });
 function fromHash() {
+  const m = location.hash.match(/^#(bipolar|single)-(\d+)$/);
+  if (m && SMALL[m[1]].some(l => l.F === +m[2])) return selectSmall(m[1], +m[2]);
   const i = LAYOUTS.findIndex(l => '#' + slug(l.name) === location.hash);
   select(i >= 0 ? i : 0);
 }
