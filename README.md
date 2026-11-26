@@ -17,7 +17,7 @@ Every forge burns 6 Xiragen/min, so efficiency is items produced per Xiragen.
 
 ## Smaller builds
 
-The best standalone layout for exactly 1 to 11 forges, each solved on its own
+The best standalone layout for exactly 1 to 12 forges, each solved on its own
 (no two builds share an area). With Bipolars, even counts form one diagonal
 chain and an odd count hangs its extra forge off the end.
 
@@ -34,6 +34,7 @@ chain and an odd count hangs its extra forge off the end.
 | 9 | 3×T4 T3 T2 T1 | 630 | 11.67 | 2×T4 T1 | 330 | 6.11 |
 | 10 | 4×T4 2×T2 | 720 | 12.00 | 2×T4 T2 | 360 | 6.00 |
 | 11 | 4×T4 T3 T2 T1 | 780 | 11.82 | 2×T4 T3 | 390 | 5.91 |
+| 12 | 5×T4 2×T2 | 870 | 12.08 | 3×T4 | 450 | 6.25 |
 
 ## Extras
 
@@ -55,7 +56,7 @@ Requires Python 3 with NumPy and SciPy (`scipy.optimize.milp`, HiGHS).
 | Script | What it does |
 |---|---|
 | `solver/layout_ilp.py` | Solves the whole 65 × 65 region: the most output, and the best items per Xiragen (Dinkelbach iteration on output ÷ forges). |
-| `solver/small_ilp.py` | Solves the best standalone layout for exactly 1 to 11 forges, Bipolar and single. |
+| `solver/small_ilp.py` | Solves the best standalone layout for exactly 1 to 12 forges, Bipolar and single. |
 | `solver/make_data.py` | Re-scores every layout from its forge positions, adds the extras, and writes `data/layouts.json` and `data/small.json`. |
 | `solver/build_page.py` | Builds `index.html` from `template.html` and the data. |
 

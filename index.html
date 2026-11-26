@@ -25,6 +25,8 @@
   --pole: #c47612;
   --waste: #a3aea8;
   --accent: #0e7f8e;
+  --s-bip: #0e97a8;   /* chart series, validated on --surface in each mode */
+  --s-sgl: #c47612;
   --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
   --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
@@ -35,6 +37,7 @@
     --region: #18231d; --tile: rgba(200, 230, 210, 0.05);
     --area: #34c3d4; --area-ink: #062126; --forge: #2a343b; --forge-edge: #6f7d87; --forge-ink: #d5dde2;
     --pole: #f0a43a; --waste: #4f5c55; --accent: #4fd0df; color-scheme: dark;
+    --s-bip: #1a9fb0; --s-sgl: #c27a16;
   }
 }
 :root[data-theme="dark"] {
@@ -42,6 +45,7 @@
   --region: #18231d; --tile: rgba(200, 230, 210, 0.05);
   --area: #34c3d4; --area-ink: #062126; --forge: #2a343b; --forge-edge: #6f7d87; --forge-ink: #d5dde2;
   --pole: #f0a43a; --waste: #4f5c55; --accent: #4fd0df; color-scheme: dark;
+  --s-bip: #1a9fb0; --s-sgl: #c27a16;
 }
 body {
   margin: 0;
@@ -121,6 +125,34 @@ td.name { font-weight: 600; }
 .seg button:hover { color: var(--fg); }
 .seg button[aria-pressed="true"]:hover { color: var(--surface); }
 .seg button:focus-visible, .counts button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.trend { display: grid; gap: 12px; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.key span { display: inline-flex; align-items: center; gap: 8px; }
+.key i { display: block; width: 22px; height: 2px; border-radius: 1px; position: relative; }
+.key i::after { content: ""; position: absolute; left: 7px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: inherit; }
+.charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+@media (max-width: 860px) { .charts { grid-template-columns: minmax(0, 1fr); } }
+.chart { position: relative; margin: 0; padding: 14px 14px 10px; display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.chart figcaption { display: grid; gap: 2px; }
+.chart figcaption strong { font-family: var(--font-display); font-weight: 600; font-size: 1rem; }
+.chart figcaption span { font-size: 12.5px; color: var(--muted); }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .band { cursor: pointer; }
+.chart .pt { cursor: pointer; }
+.tip { position: absolute; pointer-events: none; z-index: 2; min-width: 150px; padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); font-size: 12.5px; display: grid; gap: 4px; }
+.tip[hidden] { display: none; }
+.tip b { font-family: var(--font-display); font-size: 13px; }
+.tip div { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.tip div span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.tip div span i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+.tip div em { font-style: normal; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+details.table-view summary { cursor: pointer; font-size: 13px; color: var(--muted); width: fit-content; }
+details.table-view summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details.table-view .table-wrap { margin-top: 10px; }
+details.table-view table { min-width: 560px; }
+details.table-view th:nth-child(2), details.table-view td:nth-child(2) { text-align: right; }
+details.table-view tbody tr { cursor: default; }
+details.table-view tbody tr:hover { background: transparent; }
 .foot { color: var(--muted); font-size: 13px; max-width: 80ch; display: grid; gap: 6px; }
 .foot p { margin: 0; }
 </style>
@@ -149,7 +181,7 @@ td.name { font-weight: 600; }
   <section class="picker" aria-labelledby="small-title">
     <div class="picker-head">
       <strong id="small-title">Smaller builds</strong>
-      <span>The best standalone layout for exactly 1 to 11 forges. Each button shows its items per Xiragen.</span>
+      <span>The best standalone layout for exactly 1 to 12 forges. Each button shows its items per Xiragen.</span>
     </div>
     <div class="controls">
       <div class="seg" role="group" aria-label="Forge type">
@@ -176,6 +208,38 @@ td.name { font-weight: 600; }
     </aside>
   </section>
 
+  <section class="trend" aria-labelledby="trend-title">
+    <div class="picker-head">
+      <strong id="trend-title">1 to 12 forges</strong>
+      <span>The best standalone build at each count. Click a point to draw that layout above.</span>
+    </div>
+    <div class="key" aria-hidden="true">
+      <span><i style="background:var(--s-bip)"></i>Bipolar</span>
+      <span><i style="background:var(--s-sgl)"></i>Single</span>
+    </div>
+    <div class="charts">
+      <figure class="chart" id="chart-ipx">
+        <figcaption><strong>Items per Xiragen</strong><span>Output ÷ (6 Xiragen/min × forges)</span></figcaption>
+        <svg role="img" aria-label="Items per Xiragen for 1 to 12 forges, Bipolar and single"></svg>
+        <div class="tip" hidden></div>
+      </figure>
+      <figure class="chart" id="chart-out">
+        <figcaption><strong>Output</strong><span>Items converted per minute</span></figcaption>
+        <svg role="img" aria-label="Output per minute for 1 to 12 forges, Bipolar and single"></svg>
+        <div class="tip" hidden></div>
+      </figure>
+    </div>
+    <details class="table-view">
+      <summary>Show as table</summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Forges</th><th>Xiragen/min</th><th>Bipolar output/min</th><th>Bipolar items per Xiragen</th><th>Single output/min</th><th>Single items per Xiragen</th></tr></thead>
+          <tbody id="trend-rows"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
   <div class="foot">
     <p>Drawn to scale: each square is 5 × 5 tiles, and a projection lands exactly 9 tiles from its forge, so everything that stacks sits on a 9-tile lattice. An area converts 150 × chance items per minute: 30 per projection up to T3, 150 at T4.</p>
     <p>Belt and Xiragen pipe routing are not modelled; every projected tile is assumed usable. Areas take whichever array type (L or T) the plan needs.</p>
@@ -184,7 +248,7 @@ td.name { font-weight: 600; }
 
 <script>
 const LAYOUTS = [{"name":"Single diagonal","kind":"bipolar","note":"Best items per Xiragen. Your staircase, cut to the 7 diagonal cells that fit.","extra":false,"forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[0,0,2],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]],"F":12,"out":870,"xiragen":72,"ipx":12.083,"outside":0},{"name":"Three diagonals","kind":"bipolar","note":"Twice the output for a small efficiency cost: three independent chains side by side.","extra":false,"forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"],[4,0,"SW"],[3,1,"NE"],[5,1,"SW"],[4,2,"NE"],[6,2,"SW"],[5,3,"NE"],[1,3,"SW"],[0,4,"NE"],[2,4,"SW"],[1,5,"NE"],[3,5,"SW"],[2,6,"NE"]],"areas":[[0,0,2],[0,3,2],[1,1,4],[1,4,4],[2,2,4],[2,5,4],[3,0,2],[3,3,4],[3,6,2],[4,1,4],[4,4,4],[5,2,4],[5,5,4],[6,3,2],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true],[4,0,"S",true],[4,0,"W",true],[3,1,"N",true],[3,1,"E",true],[5,1,"S",true],[5,1,"W",true],[4,2,"N",true],[4,2,"E",true],[6,2,"S",true],[6,2,"W",true],[5,3,"N",true],[5,3,"E",true],[1,3,"S",true],[1,3,"W",true],[0,4,"N",true],[0,4,"E",true],[2,4,"S",true],[2,4,"W",true],[1,5,"N",true],[1,5,"E",true],[3,5,"S",true],[3,5,"W",true],[2,6,"N",true],[2,6,"E",true]],"F":24,"out":1710,"xiragen":144,"ipx":11.875,"outside":0},{"name":"Dense grid","kind":"bipolar","note":"Most output in the region. Every area is T4, but end caps waste a pole each.","extra":false,"forges":[[0,-1,"ES"],[3,-1,"ES"],[6,-1,"ES"],[-1,0,"ES"],[1,0,"SW"],[2,0,"ES"],[4,0,"SW"],[5,0,"ES"],[7,0,"SW"],[0,1,"NE"],[1,1,"ES"],[3,1,"WN"],[4,1,"ES"],[6,1,"WN"],[0,2,"ES"],[2,2,"WN"],[3,2,"ES"],[5,2,"WN"],[6,2,"SW"],[-1,3,"ES"],[1,3,"WN"],[2,3,"ES"],[4,3,"WN"],[5,3,"ES"],[7,3,"SW"],[0,4,"NE"],[1,4,"ES"],[3,4,"WN"],[4,4,"ES"],[6,4,"WN"],[0,5,"ES"],[2,5,"WN"],[3,5,"ES"],[5,5,"WN"],[6,5,"SW"],[-1,6,"ES"],[1,6,"WN"],[2,6,"NE"],[4,6,"WN"],[5,6,"NE"],[7,6,"SW"],[0,7,"WN"],[3,7,"WN"],[6,7,"WN"]],"areas":[[0,0,4],[0,3,4],[0,6,4],[1,2,4],[1,5,4],[2,1,4],[2,4,4],[3,0,4],[3,3,4],[3,6,4],[4,2,4],[4,5,4],[5,1,4],[5,4,4],[6,0,4],[6,3,4],[6,6,4]],"poles":[[0,-1,"E",false],[0,-1,"S",true],[3,-1,"E",false],[3,-1,"S",true],[6,-1,"E",false],[6,-1,"S",true],[-1,0,"E",true],[-1,0,"S",false],[1,0,"S",false],[1,0,"W",true],[2,0,"E",true],[2,0,"S",true],[4,0,"S",false],[4,0,"W",true],[5,0,"E",true],[5,0,"S",true],[7,0,"S",false],[7,0,"W",true],[0,1,"N",true],[0,1,"E",false],[1,1,"E",true],[1,1,"S",true],[3,1,"W",true],[3,1,"N",true],[4,1,"E",true],[4,1,"S",true],[6,1,"W",true],[6,1,"N",true],[0,2,"E",true],[0,2,"S",true],[2,2,"W",true],[2,2,"N",true],[3,2,"E",true],[3,2,"S",true],[5,2,"W",true],[5,2,"N",true],[6,2,"S",true],[6,2,"W",false],[-1,3,"E",true],[-1,3,"S",false],[1,3,"W",true],[1,3,"N",true],[2,3,"E",true],[2,3,"S",true],[4,3,"W",true],[4,3,"N",true],[5,3,"E",true],[5,3,"S",true],[7,3,"S",false],[7,3,"W",true],[0,4,"N",true],[0,4,"E",false],[1,4,"E",true],[1,4,"S",true],[3,4,"W",true],[3,4,"N",true],[4,4,"E",true],[4,4,"S",true],[6,4,"W",true],[6,4,"N",true],[0,5,"E",true],[0,5,"S",true],[2,5,"W",true],[2,5,"N",true],[3,5,"E",true],[3,5,"S",true],[5,5,"W",true],[5,5,"N",true],[6,5,"S",true],[6,5,"W",false],[-1,6,"E",true],[-1,6,"S",false],[1,6,"W",true],[1,6,"N",true],[2,6,"N",false],[2,6,"E",true],[4,6,"W",true],[4,6,"N",true],[5,6,"N",false],[5,6,"E",true],[7,6,"S",false],[7,6,"W",true],[0,7,"W",false],[0,7,"N",true],[3,7,"W",false],[3,7,"N",true],[6,7,"W",false],[6,7,"N",true]],"F":44,"out":2550,"xiragen":264,"ipx":9.659,"outside":0},{"name":"Plus shapes","kind":"single","note":"Best for single forges: four forges around each area always reach T4.","extra":false,"forges":[[0,-1,"S"],[5,-1,"S"],[-1,0,"E"],[1,0,"W"],[3,0,"S"],[4,0,"E"],[6,0,"W"],[0,1,"N"],[1,1,"S"],[2,1,"E"],[4,1,"W"],[5,1,"N"],[6,1,"S"],[0,2,"E"],[2,2,"W"],[3,2,"N"],[5,2,"E"],[7,2,"W"],[0,3,"S"],[1,3,"N"],[3,3,"S"],[6,3,"N"],[-1,4,"E"],[1,4,"W"],[2,4,"E"],[4,4,"W"],[6,4,"S"],[0,5,"N"],[1,5,"S"],[3,5,"N"],[4,5,"S"],[5,5,"E"],[7,5,"W"],[0,6,"E"],[2,6,"W"],[3,6,"E"],[5,6,"W"],[6,6,"N"],[1,7,"N"],[4,7,"N"]],"areas":[[0,0,4],[0,4,4],[1,2,4],[1,6,4],[3,1,4],[3,4,4],[4,6,4],[5,0,4],[6,2,4],[6,5,4]],"poles":[[0,-1,"S",true],[5,-1,"S",true],[-1,0,"E",true],[1,0,"W",true],[3,0,"S",true],[4,0,"E",true],[6,0,"W",true],[0,1,"N",true],[1,1,"S",true],[2,1,"E",true],[4,1,"W",true],[5,1,"N",true],[6,1,"S",true],[0,2,"E",true],[2,2,"W",true],[3,2,"N",true],[5,2,"E",true],[7,2,"W",true],[0,3,"S",true],[1,3,"N",true],[3,3,"S",true],[6,3,"N",true],[-1,4,"E",true],[1,4,"W",true],[2,4,"E",true],[4,4,"W",true],[6,4,"S",true],[0,5,"N",true],[1,5,"S",true],[3,5,"N",true],[4,5,"S",true],[5,5,"E",true],[7,5,"W",true],[0,6,"E",true],[2,6,"W",true],[3,6,"E",true],[5,6,"W",true],[6,6,"N",true],[1,7,"N",true],[4,7,"N",true]],"F":40,"out":1500,"xiragen":240,"ipx":6.25,"outside":0},{"name":"Packed singles","kind":"single","note":"Most output from single forges; the leftover gaps take T1 to T3 areas.","extra":false,"forges":[[0,-1,"S"],[2,-1,"S"],[6,-1,"S"],[-1,0,"E"],[1,0,"E"],[3,0,"W"],[4,0,"S"],[5,0,"E"],[7,0,"W"],[0,1,"N"],[1,1,"S"],[2,1,"N"],[3,1,"E"],[5,1,"W"],[6,1,"N"],[0,2,"E"],[2,2,"W"],[3,2,"S"],[4,2,"N"],[5,2,"E"],[7,2,"W"],[0,3,"S"],[1,3,"N"],[2,3,"E"],[4,3,"W"],[5,3,"S"],[7,3,"W"],[-1,4,"E"],[1,4,"W"],[2,4,"S"],[3,4,"N"],[4,4,"E"],[6,4,"W"],[0,5,"N"],[1,5,"E"],[3,5,"W"],[4,5,"S"],[5,5,"N"],[7,5,"W"],[-1,6,"E"],[2,6,"N"],[3,6,"E"],[5,6,"W"],[7,6,"W"],[0,7,"N"],[1,7,"N"],[4,7,"N"],[6,7,"N"]],"areas":[[0,0,3],[0,4,4],[0,6,2],[1,2,4],[1,6,1],[2,0,4],[2,5,4],[3,3,4],[4,1,4],[4,6,4],[5,4,4],[6,0,4],[6,2,2],[6,3,1],[6,5,1],[6,6,2]],"poles":[[0,-1,"S",true],[2,-1,"S",true],[6,-1,"S",true],[-1,0,"E",true],[1,0,"E",true],[3,0,"W",true],[4,0,"S",true],[5,0,"E",true],[7,0,"W",true],[0,1,"N",true],[1,1,"S",true],[2,1,"N",true],[3,1,"E",true],[5,1,"W",true],[6,1,"N",true],[0,2,"E",true],[2,2,"W",true],[3,2,"S",true],[4,2,"N",true],[5,2,"E",true],[7,2,"W",true],[0,3,"S",true],[1,3,"N",true],[2,3,"E",true],[4,3,"W",true],[5,3,"S",true],[7,3,"W",true],[-1,4,"E",true],[1,4,"W",true],[2,4,"S",true],[3,4,"N",true],[4,4,"E",true],[6,4,"W",true],[0,5,"N",true],[1,5,"E",true],[3,5,"W",true],[4,5,"S",true],[5,5,"N",true],[7,5,"W",true],[-1,6,"E",true],[2,6,"N",true],[3,6,"E",true],[5,6,"W",true],[7,6,"W",true],[0,7,"N",true],[1,7,"N",true],[4,7,"N",true],[6,7,"N",true]],"F":48,"out":1710,"xiragen":288,"ipx":5.938,"outside":0},{"name":"Nine-area staircase","kind":"bipolar","note":"The original staircase. Slightly more efficient than the 7-area chain, but its two end areas fall outside the 65 \u00d7 65 region.","extra":true,"forges":[[0,-1,"SW"],[-1,0,"NE"],[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"],[7,6,"SW"],[6,7,"NE"]],"areas":[[-1,-1,2],[0,0,4],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,4],[7,7,2]],"poles":[[0,-1,"S",true],[0,-1,"W",true],[-1,0,"N",true],[-1,0,"E",true],[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true],[7,6,"S",true],[7,6,"W",true],[6,7,"N",true],[6,7,"E",true]],"F":16,"out":1170,"xiragen":96,"ipx":12.188,"outside":2},{"name":"Capped diagonal","kind":"bipolar","note":"The 7-area chain with four extra Bipolars outside the region lifting both ends to T4. Each extra forge wastes a pole, so efficiency drops.","extra":true,"forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"],[0,-1,"SW"],[-1,0,"NE"],[7,6,"SW"],[6,7,"NE"]],"areas":[[0,0,4],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,4]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true],[0,-1,"S",true],[0,-1,"W",false],[-1,0,"N",false],[-1,0,"E",true],[7,6,"S",false],[7,6,"W",true],[6,7,"N",true],[6,7,"E",false]],"F":16,"out":1050,"xiragen":96,"ipx":10.938,"outside":0},{"name":"T3 ring","kind":"bipolar","note":"Twelve Bipolars around eight T3 areas. No pole is wasted, but T3 earns only 30 per projection, below a T4 stack.","extra":true,"forges":[[2,1,"ES"],[4,1,"SW"],[1,2,"ES"],[5,2,"SW"],[1,4,"NE"],[5,4,"WN"],[2,5,"NE"],[4,5,"WN"],[3,2,"WN"],[2,3,"SW"],[4,3,"NE"],[3,4,"ES"]],"areas":[[1,3,3],[2,2,3],[2,4,3],[3,1,3],[3,5,3],[4,2,3],[4,4,3],[5,3,3]],"poles":[[2,1,"E",true],[2,1,"S",true],[4,1,"S",true],[4,1,"W",true],[1,2,"E",true],[1,2,"S",true],[5,2,"S",true],[5,2,"W",true],[1,4,"N",true],[1,4,"E",true],[5,4,"W",true],[5,4,"N",true],[2,5,"N",true],[2,5,"E",true],[4,5,"W",true],[4,5,"N",true],[3,2,"W",true],[3,2,"N",true],[2,3,"S",true],[2,3,"W",true],[4,3,"N",true],[4,3,"E",true],[3,4,"E",true],[3,4,"S",true]],"F":12,"out":720,"xiragen":72,"ipx":10.0,"outside":0}];
-const SMALL = {"bipolar":[{"name":"1 Bipolar forge","kind":"bipolar","note":"","extra":false,"forges":[[0,6,"NE"]],"areas":[[0,5,1],[1,6,1]],"poles":[[0,6,"N",true],[0,6,"E",true]],"F":1,"out":60,"xiragen":6,"ipx":10.0,"outside":0},{"name":"2 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,5,"SW"],[0,6,"NE"]],"areas":[[0,5,2],[1,6,2]],"poles":[[1,5,"S",true],[1,5,"W",true],[0,6,"N",true],[0,6,"E",true]],"F":2,"out":120,"xiragen":12,"ipx":10.0,"outside":0},{"name":"3 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[0,3,"ES"],[1,4,"SW"],[0,5,"NE"]],"areas":[[0,4,3],[1,3,1],[1,5,2]],"poles":[[0,3,"E",true],[0,3,"S",true],[1,4,"S",true],[1,4,"W",true],[0,5,"N",true],[0,5,"E",true]],"F":3,"out":180,"xiragen":18,"ipx":10.0,"outside":0},{"name":"4 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[4,0,"SW"],[3,1,"NE"],[5,1,"SW"],[4,2,"NE"]],"areas":[[3,0,2],[4,1,4],[5,2,2]],"poles":[[4,0,"S",true],[4,0,"W",true],[3,1,"N",true],[3,1,"E",true],[5,1,"S",true],[5,1,"W",true],[4,2,"N",true],[4,2,"E",true]],"F":4,"out":270,"xiragen":24,"ipx":11.25,"outside":0},{"name":"5 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[2,2,"ES"],[4,2,"SW"],[3,3,"NE"],[5,3,"SW"],[4,4,"NE"]],"areas":[[2,3,1],[3,2,3],[4,3,4],[5,4,2]],"poles":[[2,2,"E",true],[2,2,"S",true],[4,2,"S",true],[4,2,"W",true],[3,3,"N",true],[3,3,"E",true],[5,3,"S",true],[5,3,"W",true],[4,4,"N",true],[4,4,"E",true]],"F":5,"out":330,"xiragen":30,"ipx":11.0,"outside":0},{"name":"6 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[4,1,"SW"],[3,2,"NE"],[5,2,"SW"],[4,3,"NE"],[6,3,"SW"],[5,4,"NE"]],"areas":[[3,1,2],[4,2,4],[5,3,4],[6,4,2]],"poles":[[4,1,"S",true],[4,1,"W",true],[3,2,"N",true],[3,2,"E",true],[5,2,"S",true],[5,2,"W",true],[4,3,"N",true],[4,3,"E",true],[6,3,"S",true],[6,3,"W",true],[5,4,"N",true],[5,4,"E",true]],"F":6,"out":420,"xiragen":36,"ipx":11.667,"outside":0},{"name":"7 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,1,"NE"],[3,1,"SW"],[2,2,"NE"],[4,2,"SW"],[3,3,"NE"],[5,3,"SW"],[4,4,"NE"]],"areas":[[1,0,1],[2,1,3],[3,2,4],[4,3,4],[5,4,2]],"poles":[[1,1,"N",true],[1,1,"E",true],[3,1,"S",true],[3,1,"W",true],[2,2,"N",true],[2,2,"E",true],[4,2,"S",true],[4,2,"W",true],[3,3,"N",true],[3,3,"E",true],[5,3,"S",true],[5,3,"W",true],[4,4,"N",true],[4,4,"E",true]],"F":7,"out":480,"xiragen":42,"ipx":11.429,"outside":0},{"name":"8 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[2,2,2],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]],"F":8,"out":570,"xiragen":48,"ipx":11.875,"outside":0},{"name":"9 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[5,2,"ES"],[4,3,"ES"],[6,3,"WN"],[3,4,"ES"],[5,4,"WN"],[2,5,"ES"],[4,5,"WN"],[1,6,"NE"],[3,6,"WN"]],"areas":[[1,5,1],[2,6,3],[3,5,4],[4,4,4],[5,3,4],[6,2,2]],"poles":[[5,2,"E",true],[5,2,"S",true],[4,3,"E",true],[4,3,"S",true],[6,3,"W",true],[6,3,"N",true],[3,4,"E",true],[3,4,"S",true],[5,4,"W",true],[5,4,"N",true],[2,5,"E",true],[2,5,"S",true],[4,5,"W",true],[4,5,"N",true],[1,6,"N",true],[1,6,"E",true],[3,6,"W",true],[3,6,"N",true]],"F":9,"out":630,"xiragen":54,"ipx":11.667,"outside":0},{"name":"10 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"]],"areas":[[0,0,2],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true]],"F":10,"out":720,"xiragen":60,"ipx":12.0,"outside":0},{"name":"11 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,0,"SW"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[0,0,1],[1,1,3],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]],"F":11,"out":780,"xiragen":66,"ipx":11.818,"outside":0}],"single":[{"name":"1 single forge","kind":"single","note":"","extra":false,"forges":[[1,0,"E"]],"areas":[[2,0,1]],"poles":[[1,0,"E",true]],"F":1,"out":30,"xiragen":6,"ipx":5.0,"outside":0},{"name":"2 single forges","kind":"single","note":"","extra":false,"forges":[[2,-1,"S"],[1,0,"E"]],"areas":[[2,0,2]],"poles":[[2,-1,"S",true],[1,0,"E",true]],"F":2,"out":60,"xiragen":12,"ipx":5.0,"outside":0},{"name":"3 single forges","kind":"single","note":"","extra":false,"forges":[[-1,4,"E"],[1,4,"W"],[0,5,"N"]],"areas":[[0,4,3]],"poles":[[-1,4,"E",true],[1,4,"W",true],[0,5,"N",true]],"F":3,"out":90,"xiragen":18,"ipx":5.0,"outside":0},{"name":"4 single forges","kind":"single","note":"","extra":false,"forges":[[6,4,"S"],[5,5,"E"],[7,5,"W"],[6,6,"N"]],"areas":[[6,5,4]],"poles":[[6,4,"S",true],[5,5,"E",true],[7,5,"W",true],[6,6,"N",true]],"F":4,"out":150,"xiragen":24,"ipx":6.25,"outside":0},{"name":"5 single forges","kind":"single","note":"","extra":false,"forges":[[5,1,"S"],[2,2,"W"],[4,2,"E"],[6,2,"W"],[5,3,"N"]],"areas":[[1,2,1],[5,2,4]],"poles":[[5,1,"S",true],[2,2,"W",true],[4,2,"E",true],[6,2,"W",true],[5,3,"N",true]],"F":5,"out":180,"xiragen":30,"ipx":6.0,"outside":0},{"name":"6 single forges","kind":"single","note":"","extra":false,"forges":[[0,4,"E"],[2,4,"W"],[5,5,"S"],[4,6,"E"],[6,6,"W"],[5,7,"N"]],"areas":[[1,4,2],[5,6,4]],"poles":[[0,4,"E",true],[2,4,"W",true],[5,5,"S",true],[4,6,"E",true],[6,6,"W",true],[5,7,"N",true]],"F":6,"out":210,"xiragen":36,"ipx":5.833,"outside":0},{"name":"7 single forges","kind":"single","note":"","extra":false,"forges":[[1,1,"E"],[3,1,"W"],[2,2,"N"],[4,4,"S"],[3,5,"E"],[5,5,"W"],[4,6,"N"]],"areas":[[2,1,3],[4,5,4]],"poles":[[1,1,"E",true],[3,1,"W",true],[2,2,"N",true],[4,4,"S",true],[3,5,"E",true],[5,5,"W",true],[4,6,"N",true]],"F":7,"out":240,"xiragen":42,"ipx":5.714,"outside":0},{"name":"8 single forges","kind":"single","note":"","extra":false,"forges":[[2,-1,"S"],[5,-1,"S"],[1,0,"E"],[3,0,"W"],[4,0,"E"],[6,0,"W"],[2,1,"N"],[5,1,"N"]],"areas":[[2,0,4],[5,0,4]],"poles":[[2,-1,"S",true],[5,-1,"S",true],[1,0,"E",true],[3,0,"W",true],[4,0,"E",true],[6,0,"W",true],[2,1,"N",true],[5,1,"N",true]],"F":8,"out":300,"xiragen":48,"ipx":6.25,"outside":0},{"name":"9 single forges","kind":"single","note":"","extra":false,"forges":[[3,1,"W"],[4,3,"S"],[3,4,"E"],[5,4,"W"],[2,5,"S"],[4,5,"N"],[1,6,"E"],[3,6,"W"],[2,7,"N"]],"areas":[[2,1,1],[2,6,4],[4,4,4]],"poles":[[3,1,"W",true],[4,3,"S",true],[3,4,"E",true],[5,4,"W",true],[2,5,"S",true],[4,5,"N",true],[1,6,"E",true],[3,6,"W",true],[2,7,"N",true]],"F":9,"out":330,"xiragen":54,"ipx":6.111,"outside":0},{"name":"10 single forges","kind":"single","note":"","extra":false,"forges":[[5,-1,"S"],[4,0,"E"],[6,0,"W"],[5,1,"N"],[4,2,"S"],[0,3,"S"],[3,3,"E"],[5,3,"W"],[-1,4,"E"],[4,4,"N"]],"areas":[[0,4,2],[4,3,4],[5,0,4]],"poles":[[5,-1,"S",true],[4,0,"E",true],[6,0,"W",true],[5,1,"N",true],[4,2,"S",true],[0,3,"S",true],[3,3,"E",true],[5,3,"W",true],[-1,4,"E",true],[4,4,"N",true]],"F":10,"out":360,"xiragen":60,"ipx":6.0,"outside":0},{"name":"11 single forges","kind":"single","note":"","extra":false,"forges":[[1,-1,"S"],[5,-1,"S"],[0,0,"E"],[2,0,"W"],[4,0,"E"],[1,1,"N"],[5,1,"N"],[4,5,"S"],[3,6,"E"],[5,6,"W"],[4,7,"N"]],"areas":[[1,0,4],[4,6,4],[5,0,3]],"poles":[[1,-1,"S",true],[5,-1,"S",true],[0,0,"E",true],[2,0,"W",true],[4,0,"E",true],[1,1,"N",true],[5,1,"N",true],[4,5,"S",true],[3,6,"E",true],[5,6,"W",true],[4,7,"N",true]],"F":11,"out":390,"xiragen":66,"ipx":5.909,"outside":0}]};
+const SMALL = {"bipolar":[{"name":"1 Bipolar forge","kind":"bipolar","note":"","extra":false,"forges":[[0,6,"NE"]],"areas":[[0,5,1],[1,6,1]],"poles":[[0,6,"N",true],[0,6,"E",true]],"F":1,"out":60,"xiragen":6,"ipx":10.0,"outside":0},{"name":"2 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,5,"SW"],[0,6,"NE"]],"areas":[[0,5,2],[1,6,2]],"poles":[[1,5,"S",true],[1,5,"W",true],[0,6,"N",true],[0,6,"E",true]],"F":2,"out":120,"xiragen":12,"ipx":10.0,"outside":0},{"name":"3 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[0,3,"ES"],[1,4,"SW"],[0,5,"NE"]],"areas":[[0,4,3],[1,3,1],[1,5,2]],"poles":[[0,3,"E",true],[0,3,"S",true],[1,4,"S",true],[1,4,"W",true],[0,5,"N",true],[0,5,"E",true]],"F":3,"out":180,"xiragen":18,"ipx":10.0,"outside":0},{"name":"4 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[4,0,"SW"],[3,1,"NE"],[5,1,"SW"],[4,2,"NE"]],"areas":[[3,0,2],[4,1,4],[5,2,2]],"poles":[[4,0,"S",true],[4,0,"W",true],[3,1,"N",true],[3,1,"E",true],[5,1,"S",true],[5,1,"W",true],[4,2,"N",true],[4,2,"E",true]],"F":4,"out":270,"xiragen":24,"ipx":11.25,"outside":0},{"name":"5 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[2,2,"ES"],[4,2,"SW"],[3,3,"NE"],[5,3,"SW"],[4,4,"NE"]],"areas":[[2,3,1],[3,2,3],[4,3,4],[5,4,2]],"poles":[[2,2,"E",true],[2,2,"S",true],[4,2,"S",true],[4,2,"W",true],[3,3,"N",true],[3,3,"E",true],[5,3,"S",true],[5,3,"W",true],[4,4,"N",true],[4,4,"E",true]],"F":5,"out":330,"xiragen":30,"ipx":11.0,"outside":0},{"name":"6 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[4,1,"SW"],[3,2,"NE"],[5,2,"SW"],[4,3,"NE"],[6,3,"SW"],[5,4,"NE"]],"areas":[[3,1,2],[4,2,4],[5,3,4],[6,4,2]],"poles":[[4,1,"S",true],[4,1,"W",true],[3,2,"N",true],[3,2,"E",true],[5,2,"S",true],[5,2,"W",true],[4,3,"N",true],[4,3,"E",true],[6,3,"S",true],[6,3,"W",true],[5,4,"N",true],[5,4,"E",true]],"F":6,"out":420,"xiragen":36,"ipx":11.667,"outside":0},{"name":"7 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,1,"NE"],[3,1,"SW"],[2,2,"NE"],[4,2,"SW"],[3,3,"NE"],[5,3,"SW"],[4,4,"NE"]],"areas":[[1,0,1],[2,1,3],[3,2,4],[4,3,4],[5,4,2]],"poles":[[1,1,"N",true],[1,1,"E",true],[3,1,"S",true],[3,1,"W",true],[2,2,"N",true],[2,2,"E",true],[4,2,"S",true],[4,2,"W",true],[3,3,"N",true],[3,3,"E",true],[5,3,"S",true],[5,3,"W",true],[4,4,"N",true],[4,4,"E",true]],"F":7,"out":480,"xiragen":42,"ipx":11.429,"outside":0},{"name":"8 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[2,2,2],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]],"F":8,"out":570,"xiragen":48,"ipx":11.875,"outside":0},{"name":"9 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[5,2,"ES"],[4,3,"ES"],[6,3,"WN"],[3,4,"ES"],[5,4,"WN"],[2,5,"ES"],[4,5,"WN"],[1,6,"NE"],[3,6,"WN"]],"areas":[[1,5,1],[2,6,3],[3,5,4],[4,4,4],[5,3,4],[6,2,2]],"poles":[[5,2,"E",true],[5,2,"S",true],[4,3,"E",true],[4,3,"S",true],[6,3,"W",true],[6,3,"N",true],[3,4,"E",true],[3,4,"S",true],[5,4,"W",true],[5,4,"N",true],[2,5,"E",true],[2,5,"S",true],[4,5,"W",true],[4,5,"N",true],[1,6,"N",true],[1,6,"E",true],[3,6,"W",true],[3,6,"N",true]],"F":9,"out":630,"xiragen":54,"ipx":11.667,"outside":0},{"name":"10 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"]],"areas":[[0,0,2],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true]],"F":10,"out":720,"xiragen":60,"ipx":12.0,"outside":0},{"name":"11 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,0,"SW"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[0,0,1],[1,1,3],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]],"F":11,"out":780,"xiragen":66,"ipx":11.818,"outside":0},{"name":"12 Bipolar forges","kind":"bipolar","note":"","extra":false,"forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[0,0,2],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]],"F":12,"out":870,"xiragen":72,"ipx":12.083,"outside":0}],"single":[{"name":"1 single forge","kind":"single","note":"","extra":false,"forges":[[1,0,"E"]],"areas":[[2,0,1]],"poles":[[1,0,"E",true]],"F":1,"out":30,"xiragen":6,"ipx":5.0,"outside":0},{"name":"2 single forges","kind":"single","note":"","extra":false,"forges":[[2,-1,"S"],[1,0,"E"]],"areas":[[2,0,2]],"poles":[[2,-1,"S",true],[1,0,"E",true]],"F":2,"out":60,"xiragen":12,"ipx":5.0,"outside":0},{"name":"3 single forges","kind":"single","note":"","extra":false,"forges":[[-1,4,"E"],[1,4,"W"],[0,5,"N"]],"areas":[[0,4,3]],"poles":[[-1,4,"E",true],[1,4,"W",true],[0,5,"N",true]],"F":3,"out":90,"xiragen":18,"ipx":5.0,"outside":0},{"name":"4 single forges","kind":"single","note":"","extra":false,"forges":[[6,4,"S"],[5,5,"E"],[7,5,"W"],[6,6,"N"]],"areas":[[6,5,4]],"poles":[[6,4,"S",true],[5,5,"E",true],[7,5,"W",true],[6,6,"N",true]],"F":4,"out":150,"xiragen":24,"ipx":6.25,"outside":0},{"name":"5 single forges","kind":"single","note":"","extra":false,"forges":[[5,1,"S"],[2,2,"W"],[4,2,"E"],[6,2,"W"],[5,3,"N"]],"areas":[[1,2,1],[5,2,4]],"poles":[[5,1,"S",true],[2,2,"W",true],[4,2,"E",true],[6,2,"W",true],[5,3,"N",true]],"F":5,"out":180,"xiragen":30,"ipx":6.0,"outside":0},{"name":"6 single forges","kind":"single","note":"","extra":false,"forges":[[0,4,"E"],[2,4,"W"],[5,5,"S"],[4,6,"E"],[6,6,"W"],[5,7,"N"]],"areas":[[1,4,2],[5,6,4]],"poles":[[0,4,"E",true],[2,4,"W",true],[5,5,"S",true],[4,6,"E",true],[6,6,"W",true],[5,7,"N",true]],"F":6,"out":210,"xiragen":36,"ipx":5.833,"outside":0},{"name":"7 single forges","kind":"single","note":"","extra":false,"forges":[[1,1,"E"],[3,1,"W"],[2,2,"N"],[4,4,"S"],[3,5,"E"],[5,5,"W"],[4,6,"N"]],"areas":[[2,1,3],[4,5,4]],"poles":[[1,1,"E",true],[3,1,"W",true],[2,2,"N",true],[4,4,"S",true],[3,5,"E",true],[5,5,"W",true],[4,6,"N",true]],"F":7,"out":240,"xiragen":42,"ipx":5.714,"outside":0},{"name":"8 single forges","kind":"single","note":"","extra":false,"forges":[[2,-1,"S"],[5,-1,"S"],[1,0,"E"],[3,0,"W"],[4,0,"E"],[6,0,"W"],[2,1,"N"],[5,1,"N"]],"areas":[[2,0,4],[5,0,4]],"poles":[[2,-1,"S",true],[5,-1,"S",true],[1,0,"E",true],[3,0,"W",true],[4,0,"E",true],[6,0,"W",true],[2,1,"N",true],[5,1,"N",true]],"F":8,"out":300,"xiragen":48,"ipx":6.25,"outside":0},{"name":"9 single forges","kind":"single","note":"","extra":false,"forges":[[3,1,"W"],[4,3,"S"],[3,4,"E"],[5,4,"W"],[2,5,"S"],[4,5,"N"],[1,6,"E"],[3,6,"W"],[2,7,"N"]],"areas":[[2,1,1],[2,6,4],[4,4,4]],"poles":[[3,1,"W",true],[4,3,"S",true],[3,4,"E",true],[5,4,"W",true],[2,5,"S",true],[4,5,"N",true],[1,6,"E",true],[3,6,"W",true],[2,7,"N",true]],"F":9,"out":330,"xiragen":54,"ipx":6.111,"outside":0},{"name":"10 single forges","kind":"single","note":"","extra":false,"forges":[[5,-1,"S"],[4,0,"E"],[6,0,"W"],[5,1,"N"],[4,2,"S"],[0,3,"S"],[3,3,"E"],[5,3,"W"],[-1,4,"E"],[4,4,"N"]],"areas":[[0,4,2],[4,3,4],[5,0,4]],"poles":[[5,-1,"S",true],[4,0,"E",true],[6,0,"W",true],[5,1,"N",true],[4,2,"S",true],[0,3,"S",true],[3,3,"E",true],[5,3,"W",true],[-1,4,"E",true],[4,4,"N",true]],"F":10,"out":360,"xiragen":60,"ipx":6.0,"outside":0},{"name":"11 single forges","kind":"single","note":"","extra":false,"forges":[[1,-1,"S"],[5,-1,"S"],[0,0,"E"],[2,0,"W"],[4,0,"E"],[1,1,"N"],[5,1,"N"],[4,5,"S"],[3,6,"E"],[5,6,"W"],[4,7,"N"]],"areas":[[1,0,4],[4,6,4],[5,0,3]],"poles":[[1,-1,"S",true],[5,-1,"S",true],[0,0,"E",true],[2,0,"W",true],[4,0,"E",true],[1,1,"N",true],[5,1,"N",true],[4,5,"S",true],[3,6,"E",true],[5,6,"W",true],[4,7,"N",true]],"F":11,"out":390,"xiragen":66,"ipx":5.909,"outside":0},{"name":"12 single forges","kind":"single","note":"","extra":false,"forges":[[5,-1,"S"],[4,0,"E"],[6,0,"W"],[5,1,"N"],[6,2,"S"],[5,3,"E"],[7,3,"W"],[6,4,"N"],[6,5,"S"],[5,6,"E"],[7,6,"W"],[6,7,"N"]],"areas":[[5,0,4],[6,3,4],[6,6,4]],"poles":[[5,-1,"S",true],[4,0,"E",true],[6,0,"W",true],[5,1,"N",true],[6,2,"S",true],[5,3,"E",true],[7,3,"W",true],[6,4,"N",true],[6,5,"S",true],[5,6,"E",true],[7,6,"W",true],[6,7,"N",true]],"F":12,"out":450,"xiragen":72,"ipx":6.25,"outside":0}]};
 const PITCH = 9, SIZE = 5, OFF = 3, REGION = 65;
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 const fmt = n => n.toLocaleString('en');
@@ -272,7 +336,89 @@ function renderCounts() {
     return `<button type="button" data-f="${l.F}" class="${l.ipx === best ? 'best' : ''}" aria-pressed="${on}"
       aria-label="${l.F} forge${l.F > 1 ? 's' : ''}, ${l.ipx.toFixed(2)} items per Xiragen"><b>${l.F}</b><small>${l.ipx.toFixed(2)}</small></button>`;
   }).join('');
+  renderCharts();
 }
+
+// 1-12 trend charts: one line per forge type, one chart per measure.
+const CH = { w: 560, h: 270, l: 46, r: 66, t: 14, b: 36 };
+const SERIES = [['single', 'Single', 'var(--s-sgl)'], ['bipolar', 'Bipolar', 'var(--s-bip)']];
+const CHARTS = [
+  { id: 'chart-ipx', field: 'ipx', max: 14, step: 2, tick: v => String(v), val: v => v.toFixed(2) },
+  { id: 'chart-out', field: 'out', max: 1000, step: 200, tick: v => fmt(v), val: v => `${fmt(v)}/min` },
+];
+const maxF = Math.max(...SMALL.bipolar.map(l => l.F));
+const cx = F => CH.l + (F - 1) / (maxF - 1) * (CH.w - CH.l - CH.r);
+
+function renderChart(c) {
+  const { w, h, l, r, t, b } = CH, iw = w - l - r, ih = h - t - b;
+  const cy = v => t + ih - v / c.max * ih;
+  let s = '';
+  for (let v = 0; v <= c.max + 1e-9; v += c.step) {
+    s += `<line x1="${l}" x2="${l + iw}" y1="${cy(v)}" y2="${cy(v)}" stroke="var(--line)" stroke-width="1"/>
+      <text x="${l - 8}" y="${cy(v) + 4}" text-anchor="end" font-family="var(--font-mono)" font-size="11" fill="var(--muted)">${c.tick(v)}</text>`;
+  }
+  for (let F = 1; F <= maxF; F++) {
+    s += `<text x="${cx(F)}" y="${t + ih + 17}" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--muted)">${F}</text>`;
+  }
+  s += `<text x="${l + iw / 2}" y="${h - 2}" text-anchor="middle" font-family="var(--font-body)" font-size="11" fill="var(--muted)">Forges</text>`;
+  if (current?.type === 'small') {
+    s += `<line x1="${cx(smallF)}" x2="${cx(smallF)}" y1="${t}" y2="${t + ih}" stroke="var(--accent)" stroke-width="1.5" opacity="0.45"/>`;
+  }
+  s += `<line class="cross" x1="0" x2="0" y1="${t}" y2="${t + ih}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/>`;
+  SERIES.forEach(([kind, label, color]) => {
+    const pts = SMALL[kind].map(p => [cx(p.F), cy(p[c.field])]);
+    s += `<path d="M${pts.map(p => p.join(',')).join('L')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const [ex, ey] = pts[pts.length - 1];
+    s += `<text x="${ex + 10}" y="${ey + 4}" font-family="var(--font-body)" font-weight="600" font-size="12" fill="var(--fg)">${label}</text>`;
+  });
+  // Hover/click bands, one per forge count, wider than the dots.
+  const band = (cx(2) - cx(1));
+  for (let F = 1; F <= maxF; F++) {
+    s += `<rect class="band" data-f="${F}" x="${cx(F) - band / 2}" y="${t}" width="${band}" height="${ih}" fill="transparent"/>`;
+  }
+  SERIES.forEach(([kind, label, color]) => {
+    SMALL[kind].forEach(p => {
+      const on = current?.type === 'small' && current.kind === kind && p.F === smallF;
+      s += `<circle class="pt" data-kind="${kind}" data-f="${p.F}" cx="${cx(p.F)}" cy="${cy(p[c.field])}" r="${on ? 6 : 4}"
+        fill="${color}" stroke="var(--surface)" stroke-width="2"><title>${label}, ${p.F} forge${p.F > 1 ? 's' : ''}: ${c.val(p[c.field])}</title></circle>`;
+    });
+  });
+  const svg = document.querySelector(`#${c.id} svg`);
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.innerHTML = s;
+}
+function renderCharts() { CHARTS.forEach(renderChart); }
+
+CHARTS.forEach(c => {
+  const fig = document.getElementById(c.id), svg = fig.querySelector('svg'), tip = fig.querySelector('.tip');
+  const hide = () => { tip.hidden = true; svg.querySelector('.cross')?.setAttribute('visibility', 'hidden'); };
+  svg.addEventListener('pointerover', e => {
+    const el = e.target.closest('[data-f]'); if (!el) return;
+    const F = +el.dataset.f;
+    const cross = svg.querySelector('.cross');
+    cross.setAttribute('x1', cx(F)); cross.setAttribute('x2', cx(F)); cross.setAttribute('visibility', 'visible');
+    tip.innerHTML = `<b>${F} forge${F > 1 ? 's' : ''} · ${6 * F} Xiragen/min</b>` + SERIES.slice().reverse().map(([kind, label, color]) => {
+      const p = SMALL[kind].find(q => q.F === F);
+      return `<div><span><i style="background:${color}"></i>${label}</span><em>${c.val(p[c.field])}</em></div>`;
+    }).join('');
+    tip.hidden = false;
+    const sr = svg.getBoundingClientRect(), fr = fig.getBoundingClientRect();
+    const x = sr.left - fr.left + cx(F) / CH.w * sr.width;
+    const left = x + 14 + tip.offsetWidth > fig.clientWidth ? x - 14 - tip.offsetWidth : x + 14;
+    tip.style.left = `${Math.max(4, left)}px`;
+    tip.style.top = `${sr.top - fr.top + 8}px`;
+  });
+  svg.addEventListener('pointerleave', hide);
+  svg.addEventListener('click', e => {
+    const el = e.target.closest('[data-f]'); if (!el) return;
+    selectSmall(el.dataset.kind || smallKind, +el.dataset.f);
+  });
+});
+
+document.getElementById('trend-rows').innerHTML = SMALL.bipolar.map((p, i) => {
+  const q = SMALL.single[i];
+  return `<tr><td class="num">${p.F}</td><td class="num">${p.xiragen}</td><td class="num">${fmt(p.out)}</td><td class="num">${p.ipx.toFixed(2)}</td><td class="num">${fmt(q.out)}</td><td class="num">${q.ipx.toFixed(2)}</td></tr>`;
+}).join('');
 
 function smallNote(kind, F) {
   const what = `The best standalone layout for exactly ${F} ${kind === 'bipolar' ? 'Bipolar' : 'single'} forge${F > 1 ? 's' : ''}, solved on its own.`;

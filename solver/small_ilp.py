@@ -1,4 +1,4 @@
-"""Best standalone layout for exactly F forges, F = 1..11, Bipolar and single.
+"""Best standalone layout for exactly F forges, F = 1..12, Bipolar and single.
 
 Same lattice model as layout_ilp.py: areas inside the 7x7 inner cells (65x65
 region), forges may use the outer ring; an area with k stacked projections
@@ -82,7 +82,7 @@ results = {}
 for kind in ("bipolar", "single"):
     m = model(kind)
     results[kind] = []
-    for F in range(1, 12):
+    for F in range(1, 13):
         forges, areas, out, st = solve(m, F)
         tiers = sorted((a[2] for a in areas), reverse=True)
         print(f"{kind:7s} F={F:2d} out={out:5.0f} per-forge={out / F:6.2f} items/Xiragen={out / (6 * F):6.3f} tiers={tiers} status={st}", flush=True)
