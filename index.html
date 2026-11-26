@@ -89,6 +89,28 @@ td.name { font-weight: 600; }
 .legend { display: grid; gap: 8px; font-size: 13px; color: var(--muted); }
 .legend div { display: flex; align-items: center; gap: 10px; }
 .legend svg { flex: none; }
+.small { display: grid; gap: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.small h2 { font-family: var(--font-display); font-size: 1.45rem; margin: 0; line-height: 1.2; }
+.small > p { margin: 0; color: var(--muted); max-width: 75ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button, .counts button {
+  font: 600 13px/1 var(--font-body); color: var(--muted); background: transparent; border: 0; cursor: pointer;
+}
+.seg button { padding: 9px 14px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"], .counts button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.counts { display: flex; flex-wrap: wrap; gap: 6px; }
+.counts button { font-family: var(--font-mono); min-width: 38px; padding: 8px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.counts button:hover, .seg button:hover { color: var(--fg); }
+.counts button[aria-pressed="true"]:hover, .seg button[aria-pressed="true"]:hover { color: var(--surface); }
+.seg button:focus-visible, .counts button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.small-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .small-grid { grid-template-columns: minmax(0, 1fr); } }
+.small-grid .diagram { display: grid; gap: 8px; }
+.small-grid .diagram figcaption { font-size: 13px; color: var(--muted); padding: 2px 4px 0; }
+.small table { min-width: 520px; }
+.tier-list { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
 .foot { color: var(--muted); font-size: 13px; max-width: 80ch; display: grid; gap: 6px; }
 .foot p { margin: 0; }
 </style>
@@ -124,6 +146,30 @@ td.name { font-weight: 600; }
     </aside>
   </section>
 
+  <section class="small" aria-labelledby="small-title">
+    <h2 id="small-title">Smaller builds</h2>
+    <p>The best standalone layout for exactly 1 to 11 forges, each solved on its own, so no two builds share an area. With Bipolars, even counts form one diagonal chain, and an odd count hangs its extra forge off the end.</p>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Forge type">
+        <button type="button" id="kind-bipolar" data-kind="bipolar" aria-pressed="true">Bipolar</button>
+        <button type="button" id="kind-single" data-kind="single" aria-pressed="false">Single</button>
+      </div>
+      <div class="counts" id="counts" role="group" aria-label="Forge count"></div>
+    </div>
+    <div class="small-grid">
+      <figure class="diagram" style="margin:0">
+        <svg id="small-plot" role="img" aria-label="Small build diagram"></svg>
+        <figcaption id="small-caption"></figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Forges</th><th>Areas</th><th>Xiragen/min</th><th>Output/min</th><th>Items per Xiragen</th></tr></thead>
+          <tbody id="small-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <div class="foot">
     <p>Drawn to scale: each square is 5 × 5 tiles, and a projection lands exactly 9 tiles from its forge, so everything that stacks sits on a 9-tile lattice. An area converts 150 × chance items per minute: 30 per projection up to T3, 150 at T4.</p>
     <p>Belt and Xiragen pipe routing are not modelled; every projected tile is assumed usable. Areas take whichever array type (L or T) the plan needs.</p>
@@ -132,6 +178,7 @@ td.name { font-weight: 600; }
 
 <script>
 const LAYOUTS = [{"name":"Single diagonal","kind":"bipolar","note":"Best items per Xiragen. Your staircase, cut to the 7 diagonal cells that fit.","forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[0,0,2],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]],"F":12,"out":870,"xiragen":72,"ipx":12.083},{"name":"Three diagonals","kind":"bipolar","note":"Twice the output for a small efficiency cost: three independent chains side by side.","forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"],[4,0,"SW"],[3,1,"NE"],[5,1,"SW"],[4,2,"NE"],[6,2,"SW"],[5,3,"NE"],[1,3,"SW"],[0,4,"NE"],[2,4,"SW"],[1,5,"NE"],[3,5,"SW"],[2,6,"NE"]],"areas":[[0,0,2],[0,3,2],[1,1,4],[1,4,4],[2,2,4],[2,5,4],[3,0,2],[3,3,4],[3,6,2],[4,1,4],[4,4,4],[5,2,4],[5,5,4],[6,3,2],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true],[4,0,"S",true],[4,0,"W",true],[3,1,"N",true],[3,1,"E",true],[5,1,"S",true],[5,1,"W",true],[4,2,"N",true],[4,2,"E",true],[6,2,"S",true],[6,2,"W",true],[5,3,"N",true],[5,3,"E",true],[1,3,"S",true],[1,3,"W",true],[0,4,"N",true],[0,4,"E",true],[2,4,"S",true],[2,4,"W",true],[1,5,"N",true],[1,5,"E",true],[3,5,"S",true],[3,5,"W",true],[2,6,"N",true],[2,6,"E",true]],"F":24,"out":1710,"xiragen":144,"ipx":11.875},{"name":"Dense grid","kind":"bipolar","note":"Most output in the region. Every area is T4, but end caps waste a pole each.","forges":[[0,-1,"ES"],[3,-1,"ES"],[6,-1,"ES"],[-1,0,"ES"],[1,0,"SW"],[2,0,"ES"],[4,0,"SW"],[5,0,"ES"],[7,0,"SW"],[0,1,"NE"],[1,1,"ES"],[3,1,"WN"],[4,1,"ES"],[6,1,"WN"],[0,2,"ES"],[2,2,"WN"],[3,2,"ES"],[5,2,"WN"],[6,2,"SW"],[-1,3,"ES"],[1,3,"WN"],[2,3,"ES"],[4,3,"WN"],[5,3,"ES"],[7,3,"SW"],[0,4,"NE"],[1,4,"ES"],[3,4,"WN"],[4,4,"ES"],[6,4,"WN"],[0,5,"ES"],[2,5,"WN"],[3,5,"ES"],[5,5,"WN"],[6,5,"SW"],[-1,6,"ES"],[1,6,"WN"],[2,6,"NE"],[4,6,"WN"],[5,6,"NE"],[7,6,"SW"],[0,7,"WN"],[3,7,"WN"],[6,7,"WN"]],"areas":[[0,0,4],[0,3,4],[0,6,4],[1,2,4],[1,5,4],[2,1,4],[2,4,4],[3,0,4],[3,3,4],[3,6,4],[4,2,4],[4,5,4],[5,1,4],[5,4,4],[6,0,4],[6,3,4],[6,6,4]],"poles":[[0,-1,"E",false],[0,-1,"S",true],[3,-1,"E",false],[3,-1,"S",true],[6,-1,"E",false],[6,-1,"S",true],[-1,0,"E",true],[-1,0,"S",false],[1,0,"S",false],[1,0,"W",true],[2,0,"E",true],[2,0,"S",true],[4,0,"S",false],[4,0,"W",true],[5,0,"E",true],[5,0,"S",true],[7,0,"S",false],[7,0,"W",true],[0,1,"N",true],[0,1,"E",false],[1,1,"E",true],[1,1,"S",true],[3,1,"W",true],[3,1,"N",true],[4,1,"E",true],[4,1,"S",true],[6,1,"W",true],[6,1,"N",true],[0,2,"E",true],[0,2,"S",true],[2,2,"W",true],[2,2,"N",true],[3,2,"E",true],[3,2,"S",true],[5,2,"W",true],[5,2,"N",true],[6,2,"S",true],[6,2,"W",false],[-1,3,"E",true],[-1,3,"S",false],[1,3,"W",true],[1,3,"N",true],[2,3,"E",true],[2,3,"S",true],[4,3,"W",true],[4,3,"N",true],[5,3,"E",true],[5,3,"S",true],[7,3,"S",false],[7,3,"W",true],[0,4,"N",true],[0,4,"E",false],[1,4,"E",true],[1,4,"S",true],[3,4,"W",true],[3,4,"N",true],[4,4,"E",true],[4,4,"S",true],[6,4,"W",true],[6,4,"N",true],[0,5,"E",true],[0,5,"S",true],[2,5,"W",true],[2,5,"N",true],[3,5,"E",true],[3,5,"S",true],[5,5,"W",true],[5,5,"N",true],[6,5,"S",true],[6,5,"W",false],[-1,6,"E",true],[-1,6,"S",false],[1,6,"W",true],[1,6,"N",true],[2,6,"N",false],[2,6,"E",true],[4,6,"W",true],[4,6,"N",true],[5,6,"N",false],[5,6,"E",true],[7,6,"S",false],[7,6,"W",true],[0,7,"W",false],[0,7,"N",true],[3,7,"W",false],[3,7,"N",true],[6,7,"W",false],[6,7,"N",true]],"F":44,"out":2550,"xiragen":264,"ipx":9.659},{"name":"Plus shapes","kind":"single","note":"Best for single forges: four forges around each area always reach T4.","forges":[[0,-1,"S"],[5,-1,"S"],[-1,0,"E"],[1,0,"W"],[3,0,"S"],[4,0,"E"],[6,0,"W"],[0,1,"N"],[1,1,"S"],[2,1,"E"],[4,1,"W"],[5,1,"N"],[6,1,"S"],[0,2,"E"],[2,2,"W"],[3,2,"N"],[5,2,"E"],[7,2,"W"],[0,3,"S"],[1,3,"N"],[3,3,"S"],[6,3,"N"],[-1,4,"E"],[1,4,"W"],[2,4,"E"],[4,4,"W"],[6,4,"S"],[0,5,"N"],[1,5,"S"],[3,5,"N"],[4,5,"S"],[5,5,"E"],[7,5,"W"],[0,6,"E"],[2,6,"W"],[3,6,"E"],[5,6,"W"],[6,6,"N"],[1,7,"N"],[4,7,"N"]],"areas":[[0,0,4],[0,4,4],[1,2,4],[1,6,4],[3,1,4],[3,4,4],[4,6,4],[5,0,4],[6,2,4],[6,5,4]],"poles":[[0,-1,"S",true],[5,-1,"S",true],[-1,0,"E",true],[1,0,"W",true],[3,0,"S",true],[4,0,"E",true],[6,0,"W",true],[0,1,"N",true],[1,1,"S",true],[2,1,"E",true],[4,1,"W",true],[5,1,"N",true],[6,1,"S",true],[0,2,"E",true],[2,2,"W",true],[3,2,"N",true],[5,2,"E",true],[7,2,"W",true],[0,3,"S",true],[1,3,"N",true],[3,3,"S",true],[6,3,"N",true],[-1,4,"E",true],[1,4,"W",true],[2,4,"E",true],[4,4,"W",true],[6,4,"S",true],[0,5,"N",true],[1,5,"S",true],[3,5,"N",true],[4,5,"S",true],[5,5,"E",true],[7,5,"W",true],[0,6,"E",true],[2,6,"W",true],[3,6,"E",true],[5,6,"W",true],[6,6,"N",true],[1,7,"N",true],[4,7,"N",true]],"F":40,"out":1500,"xiragen":240,"ipx":6.25},{"name":"Packed singles","kind":"single","note":"Most output from single forges; the leftover gaps take T1 to T3 areas.","forges":[[0,-1,"S"],[2,-1,"S"],[6,-1,"S"],[-1,0,"E"],[1,0,"E"],[3,0,"W"],[4,0,"S"],[5,0,"E"],[7,0,"W"],[0,1,"N"],[1,1,"S"],[2,1,"N"],[3,1,"E"],[5,1,"W"],[6,1,"N"],[0,2,"E"],[2,2,"W"],[3,2,"S"],[4,2,"N"],[5,2,"E"],[7,2,"W"],[0,3,"S"],[1,3,"N"],[2,3,"E"],[4,3,"W"],[5,3,"S"],[7,3,"W"],[-1,4,"E"],[1,4,"W"],[2,4,"S"],[3,4,"N"],[4,4,"E"],[6,4,"W"],[0,5,"N"],[1,5,"E"],[3,5,"W"],[4,5,"S"],[5,5,"N"],[7,5,"W"],[-1,6,"E"],[2,6,"N"],[3,6,"E"],[5,6,"W"],[7,6,"W"],[0,7,"N"],[1,7,"N"],[4,7,"N"],[6,7,"N"]],"areas":[[0,0,3],[0,4,4],[0,6,2],[1,2,4],[1,6,1],[2,0,4],[2,5,4],[3,3,4],[4,1,4],[4,6,4],[5,4,4],[6,0,4],[6,2,2],[6,3,1],[6,5,1],[6,6,2]],"poles":[[0,-1,"S",true],[2,-1,"S",true],[6,-1,"S",true],[-1,0,"E",true],[1,0,"E",true],[3,0,"W",true],[4,0,"S",true],[5,0,"E",true],[7,0,"W",true],[0,1,"N",true],[1,1,"S",true],[2,1,"N",true],[3,1,"E",true],[5,1,"W",true],[6,1,"N",true],[0,2,"E",true],[2,2,"W",true],[3,2,"S",true],[4,2,"N",true],[5,2,"E",true],[7,2,"W",true],[0,3,"S",true],[1,3,"N",true],[2,3,"E",true],[4,3,"W",true],[5,3,"S",true],[7,3,"W",true],[-1,4,"E",true],[1,4,"W",true],[2,4,"S",true],[3,4,"N",true],[4,4,"E",true],[6,4,"W",true],[0,5,"N",true],[1,5,"E",true],[3,5,"W",true],[4,5,"S",true],[5,5,"N",true],[7,5,"W",true],[-1,6,"E",true],[2,6,"N",true],[3,6,"E",true],[5,6,"W",true],[7,6,"W",true],[0,7,"N",true],[1,7,"N",true],[4,7,"N",true],[6,7,"N",true]],"F":48,"out":1710,"xiragen":288,"ipx":5.938}];
+const SMALL = {"bipolar":[{"name":"1 Bipolar forge","kind":"bipolar","F":1,"out":60,"xiragen":6,"ipx":10.0,"forges":[[0,6,"NE"]],"areas":[[0,5,1],[1,6,1]],"poles":[[0,6,"N",true],[0,6,"E",true]]},{"name":"2 Bipolar forges","kind":"bipolar","F":2,"out":120,"xiragen":12,"ipx":10.0,"forges":[[1,5,"SW"],[0,6,"NE"]],"areas":[[0,5,2],[1,6,2]],"poles":[[1,5,"S",true],[1,5,"W",true],[0,6,"N",true],[0,6,"E",true]]},{"name":"3 Bipolar forges","kind":"bipolar","F":3,"out":180,"xiragen":18,"ipx":10.0,"forges":[[0,3,"ES"],[1,4,"SW"],[0,5,"NE"]],"areas":[[1,3,1],[0,4,3],[1,5,2]],"poles":[[0,3,"E",true],[0,3,"S",true],[1,4,"S",true],[1,4,"W",true],[0,5,"N",true],[0,5,"E",true]]},{"name":"4 Bipolar forges","kind":"bipolar","F":4,"out":270,"xiragen":24,"ipx":11.25,"forges":[[4,0,"SW"],[3,1,"NE"],[5,1,"SW"],[4,2,"NE"]],"areas":[[3,0,2],[4,1,4],[5,2,2]],"poles":[[4,0,"S",true],[4,0,"W",true],[3,1,"N",true],[3,1,"E",true],[5,1,"S",true],[5,1,"W",true],[4,2,"N",true],[4,2,"E",true]]},{"name":"5 Bipolar forges","kind":"bipolar","F":5,"out":330,"xiragen":30,"ipx":11.0,"forges":[[2,2,"ES"],[4,2,"SW"],[3,3,"NE"],[5,3,"SW"],[4,4,"NE"]],"areas":[[3,2,3],[2,3,1],[4,3,4],[5,4,2]],"poles":[[2,2,"E",true],[2,2,"S",true],[4,2,"S",true],[4,2,"W",true],[3,3,"N",true],[3,3,"E",true],[5,3,"S",true],[5,3,"W",true],[4,4,"N",true],[4,4,"E",true]]},{"name":"6 Bipolar forges","kind":"bipolar","F":6,"out":420,"xiragen":36,"ipx":11.667,"forges":[[4,1,"SW"],[3,2,"NE"],[5,2,"SW"],[4,3,"NE"],[6,3,"SW"],[5,4,"NE"]],"areas":[[3,1,2],[4,2,4],[5,3,4],[6,4,2]],"poles":[[4,1,"S",true],[4,1,"W",true],[3,2,"N",true],[3,2,"E",true],[5,2,"S",true],[5,2,"W",true],[4,3,"N",true],[4,3,"E",true],[6,3,"S",true],[6,3,"W",true],[5,4,"N",true],[5,4,"E",true]]},{"name":"7 Bipolar forges","kind":"bipolar","F":7,"out":480,"xiragen":42,"ipx":11.429,"forges":[[1,1,"NE"],[3,1,"SW"],[2,2,"NE"],[4,2,"SW"],[3,3,"NE"],[5,3,"SW"],[4,4,"NE"]],"areas":[[1,0,1],[2,1,3],[3,2,4],[4,3,4],[5,4,2]],"poles":[[1,1,"N",true],[1,1,"E",true],[3,1,"S",true],[3,1,"W",true],[2,2,"N",true],[2,2,"E",true],[4,2,"S",true],[4,2,"W",true],[3,3,"N",true],[3,3,"E",true],[5,3,"S",true],[5,3,"W",true],[4,4,"N",true],[4,4,"E",true]]},{"name":"8 Bipolar forges","kind":"bipolar","F":8,"out":570,"xiragen":48,"ipx":11.875,"forges":[[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[2,2,2],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]]},{"name":"9 Bipolar forges","kind":"bipolar","F":9,"out":630,"xiragen":54,"ipx":11.667,"forges":[[5,2,"ES"],[4,3,"ES"],[6,3,"WN"],[3,4,"ES"],[5,4,"WN"],[2,5,"ES"],[4,5,"WN"],[1,6,"NE"],[3,6,"WN"]],"areas":[[6,2,2],[5,3,4],[4,4,4],[1,5,1],[3,5,4],[2,6,3]],"poles":[[5,2,"E",true],[5,2,"S",true],[4,3,"E",true],[4,3,"S",true],[6,3,"W",true],[6,3,"N",true],[3,4,"E",true],[3,4,"S",true],[5,4,"W",true],[5,4,"N",true],[2,5,"E",true],[2,5,"S",true],[4,5,"W",true],[4,5,"N",true],[1,6,"N",true],[1,6,"E",true],[3,6,"W",true],[3,6,"N",true]]},{"name":"10 Bipolar forges","kind":"bipolar","F":10,"out":720,"xiragen":60,"ipx":12.0,"forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"]],"areas":[[0,0,2],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true]]},{"name":"11 Bipolar forges","kind":"bipolar","F":11,"out":780,"xiragen":66,"ipx":11.818,"forges":[[1,0,"SW"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[0,0,1],[1,1,3],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]]}],"single":[{"name":"1 single forge","kind":"single","F":1,"out":30,"xiragen":6,"ipx":5.0,"forges":[[1,0,"E"]],"areas":[[2,0,1]],"poles":[[1,0,"E",true]]},{"name":"2 single forges","kind":"single","F":2,"out":60,"xiragen":12,"ipx":5.0,"forges":[[2,-1,"S"],[1,0,"E"]],"areas":[[2,0,2]],"poles":[[2,-1,"S",true],[1,0,"E",true]]},{"name":"3 single forges","kind":"single","F":3,"out":90,"xiragen":18,"ipx":5.0,"forges":[[-1,4,"E"],[1,4,"W"],[0,5,"N"]],"areas":[[0,4,3]],"poles":[[-1,4,"E",true],[1,4,"W",true],[0,5,"N",true]]},{"name":"4 single forges","kind":"single","F":4,"out":150,"xiragen":24,"ipx":6.25,"forges":[[6,4,"S"],[5,5,"E"],[7,5,"W"],[6,6,"N"]],"areas":[[6,5,4]],"poles":[[6,4,"S",true],[5,5,"E",true],[7,5,"W",true],[6,6,"N",true]]},{"name":"5 single forges","kind":"single","F":5,"out":180,"xiragen":30,"ipx":6.0,"forges":[[5,1,"S"],[2,2,"W"],[4,2,"E"],[6,2,"W"],[5,3,"N"]],"areas":[[1,2,1],[5,2,4]],"poles":[[5,1,"S",true],[2,2,"W",true],[4,2,"E",true],[6,2,"W",true],[5,3,"N",true]]},{"name":"6 single forges","kind":"single","F":6,"out":210,"xiragen":36,"ipx":5.833,"forges":[[0,4,"E"],[2,4,"W"],[5,5,"S"],[4,6,"E"],[6,6,"W"],[5,7,"N"]],"areas":[[1,4,2],[5,6,4]],"poles":[[0,4,"E",true],[2,4,"W",true],[5,5,"S",true],[4,6,"E",true],[6,6,"W",true],[5,7,"N",true]]},{"name":"7 single forges","kind":"single","F":7,"out":240,"xiragen":42,"ipx":5.714,"forges":[[1,1,"E"],[3,1,"W"],[2,2,"N"],[4,4,"S"],[3,5,"E"],[5,5,"W"],[4,6,"N"]],"areas":[[2,1,3],[4,5,4]],"poles":[[1,1,"E",true],[3,1,"W",true],[2,2,"N",true],[4,4,"S",true],[3,5,"E",true],[5,5,"W",true],[4,6,"N",true]]},{"name":"8 single forges","kind":"single","F":8,"out":300,"xiragen":48,"ipx":6.25,"forges":[[2,-1,"S"],[5,-1,"S"],[1,0,"E"],[3,0,"W"],[4,0,"E"],[6,0,"W"],[2,1,"N"],[5,1,"N"]],"areas":[[2,0,4],[5,0,4]],"poles":[[2,-1,"S",true],[5,-1,"S",true],[1,0,"E",true],[3,0,"W",true],[4,0,"E",true],[6,0,"W",true],[2,1,"N",true],[5,1,"N",true]]},{"name":"9 single forges","kind":"single","F":9,"out":330,"xiragen":54,"ipx":6.111,"forges":[[3,1,"W"],[4,3,"S"],[3,4,"E"],[5,4,"W"],[2,5,"S"],[4,5,"N"],[1,6,"E"],[3,6,"W"],[2,7,"N"]],"areas":[[2,1,1],[4,4,4],[2,6,4]],"poles":[[3,1,"W",true],[4,3,"S",true],[3,4,"E",true],[5,4,"W",true],[2,5,"S",true],[4,5,"N",true],[1,6,"E",true],[3,6,"W",true],[2,7,"N",true]]},{"name":"10 single forges","kind":"single","F":10,"out":360,"xiragen":60,"ipx":6.0,"forges":[[5,-1,"S"],[4,0,"E"],[6,0,"W"],[5,1,"N"],[4,2,"S"],[0,3,"S"],[3,3,"E"],[5,3,"W"],[-1,4,"E"],[4,4,"N"]],"areas":[[5,0,4],[4,3,4],[0,4,2]],"poles":[[5,-1,"S",true],[4,0,"E",true],[6,0,"W",true],[5,1,"N",true],[4,2,"S",true],[0,3,"S",true],[3,3,"E",true],[5,3,"W",true],[-1,4,"E",true],[4,4,"N",true]]},{"name":"11 single forges","kind":"single","F":11,"out":390,"xiragen":66,"ipx":5.909,"forges":[[1,-1,"S"],[5,-1,"S"],[0,0,"E"],[2,0,"W"],[4,0,"E"],[1,1,"N"],[5,1,"N"],[4,5,"S"],[3,6,"E"],[5,6,"W"],[4,7,"N"]],"areas":[[1,0,4],[5,0,3],[4,6,4]],"poles":[[1,-1,"S",true],[5,-1,"S",true],[0,0,"E",true],[2,0,"W",true],[4,0,"E",true],[1,1,"N",true],[5,1,"N",true],[4,5,"S",true],[3,6,"E",true],[5,6,"W",true],[4,7,"N",true]]}]};
 const PITCH = 9, SIZE = 5, OFF = 3, REGION = 65;
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 const fmt = n => n.toLocaleString('en');
@@ -151,10 +198,19 @@ rows.innerHTML = LAYOUTS.map((l, i) => `
 
 function tileOf(c) { return OFF + PITCH * c; }
 
-function draw(l) {
-  const svg = document.getElementById('plot');
-  const min = -9, max = REGION + 9, span = max - min;
-  svg.setAttribute('viewBox', `${min} ${min} ${span} ${span}`);
+function draw(l, svgId = 'plot', crop = false) {
+  const svg = document.getElementById(svgId);
+  if (crop) {
+    // Frame just the build, with room for arrows into empty neighbours.
+    const xs = [...l.forges, ...l.areas].map(o => tileOf(o[0]));
+    const ys = [...l.forges, ...l.areas].map(o => tileOf(o[1]));
+    const x0 = Math.min(...xs) - 5, y0 = Math.min(...ys) - 5;
+    const w = Math.max(Math.max(...xs) + SIZE + 5 - x0, 28), h = Math.max(Math.max(...ys) + SIZE + 5 - y0, 22);
+    svg.setAttribute('viewBox', `${x0} ${y0} ${w} ${h}`);
+  } else {
+    const min = -9, max = REGION + 9, span = max - min;
+    svg.setAttribute('viewBox', `${min} ${min} ${span} ${span}`);
+  }
   let s = '';
   // region and tile grid
   s += `<rect x="0" y="0" width="${REGION}" height="${REGION}" fill="var(--region)"/>`;
@@ -193,6 +249,49 @@ function draw(l) {
   svg.innerHTML = s;
   svg.setAttribute('aria-label', `${l.name}: ${l.F} forges, ${l.areas.length} areas`);
 }
+
+// Smaller builds: one standalone layout per forge count.
+let smallKind = 'bipolar', smallF = 10;
+const smallBest = kind => Math.max(...SMALL[kind].map(l => l.ipx));
+function tierText(l) {
+  const c = {};
+  l.areas.forEach(a => { c[a[2]] = (c[a[2]] || 0) + 1; });
+  return Object.keys(c).sort((a, b) => b - a).map(k => `${c[k] > 1 ? c[k] + '×' : ''}T${k}`).join(' ');
+}
+function renderSmall() {
+  const list = SMALL[smallKind], best = smallBest(smallKind);
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === smallKind)));
+  document.getElementById('counts').innerHTML = list.map(l =>
+    `<button type="button" data-f="${l.F}" aria-pressed="${l.F === smallF}" aria-label="${l.F} forge${l.F > 1 ? 's' : ''}">${l.F}</button>`).join('');
+  document.getElementById('small-rows').innerHTML = list.map(l => `
+    <tr tabindex="0" data-f="${l.F}" aria-selected="${l.F === smallF}">
+      <td class="num">${l.F}</td>
+      <td class="tier-list">${tierText(l)}</td>
+      <td class="num">${l.xiragen}</td>
+      <td class="num">${fmt(l.out)}</td>
+      <td class="num"><span class="eff ${l.ipx === best ? 'best' : ''}">${l.ipx.toFixed(2)}<i><b style="width:${(l.ipx / 12.5 * 100).toFixed(1)}%"></b></i></span></td>
+    </tr>`).join('');
+  const l = list.find(x => x.F === smallF);
+  draw(l, 'small-plot', true);
+  document.getElementById('small-caption').textContent =
+    `${l.name}: ${fmt(l.out)} items/min on ${l.xiragen} Xiragen/min, ${l.ipx.toFixed(2)} items per Xiragen.`;
+}
+document.querySelector('.seg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  smallKind = b.dataset.kind; renderSmall();
+});
+document.getElementById('counts').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  smallF = +b.dataset.f; renderSmall();
+  document.querySelector(`#counts button[data-f="${smallF}"]`).focus();
+});
+const smallRows = document.getElementById('small-rows');
+smallRows.addEventListener('click', e => { const r = e.target.closest('tr'); if (r) { smallF = +r.dataset.f; renderSmall(); } });
+smallRows.addEventListener('keydown', e => {
+  const r = e.target.closest('tr'); if (!r) return;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); smallF = +r.dataset.f; renderSmall(); smallRows.querySelector(`tr[data-f="${smallF}"]`).focus(); }
+});
+renderSmall();
 
 function select(i) {
   const l = LAYOUTS[i];
