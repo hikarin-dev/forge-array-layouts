@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Forge Array Layouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: comparison table on top selects one layout; its to-scale lattice
+   diagram fills the stage below, with the layout's numbers beside it. */
+:root {
+  --bg: #edf1ec;
+  --surface: #f8faf6;
+  --line: #d3dbd2;
+  --fg: #1b2420;
+  --muted: #5a6962;
+  --region: #e1e9df;
+  --tile: rgba(40, 70, 55, 0.07);
+  --area: #0e97a8;
+  --area-ink: #ffffff;
+  --forge: #46525c;
+  --forge-edge: #2c353c;
+  --forge-ink: #e9eef0;
+  --pole: #c47612;
+  --waste: #a3aea8;
+  --accent: #0e7f8e;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101613; --surface: #171f1b; --line: #26312b; --fg: #e3ebe6; --muted: #93a29a;
+    --region: #18231d; --tile: rgba(200, 230, 210, 0.05);
+    --area: #34c3d4; --area-ink: #062126; --forge: #2a343b; --forge-edge: #6f7d87; --forge-ink: #d5dde2;
+    --pole: #f0a43a; --waste: #4f5c55; --accent: #4fd0df; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101613; --surface: #171f1b; --line: #26312b; --fg: #e3ebe6; --muted: #93a29a;
+  --region: #18231d; --tile: rgba(200, 230, 210, 0.05);
+  --area: #34c3d4; --area-ink: #062126; --forge: #2a343b; --forge-edge: #6f7d87; --forge-ink: #d5dde2;
+  --pole: #f0a43a; --waste: #4f5c55; --accent: #4fd0df; color-scheme: dark;
+}
+body {
+  margin: 0;
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 3vw, 2.1rem); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { margin: 6px 0 0; color: var(--muted); max-width: 70ch; }
+.lede b { color: var(--fg); font-weight: 600; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 640px; }
+th, td { padding: 10px 14px; text-align: right; white-space: nowrap; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+thead th { font: 600 11px/1 var(--font-body); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); padding-block: 12px; }
+tbody tr { border-top: 1px solid var(--line); cursor: pointer; }
+tbody tr:first-child { border-top: 0; }
+tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 13%, transparent); }
+tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+td.name { font-weight: 600; }
+.kind { display: inline-block; font: 600 11px/1 var(--font-body); letter-spacing: 0.04em; padding: 4px 7px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
+.kind.bipolar { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.eff { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.eff i { display: block; width: 64px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.eff i b { display: block; height: 100%; background: var(--accent); }
+.best { color: var(--accent); font-weight: 600; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 22px; align-items: start; }
+@media (max-width: 860px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; min-width: 0; }
+.diagram svg { display: block; width: 100%; height: auto; }
+.side { display: grid; gap: 16px; min-width: 0; }
+.side h2 { font-family: var(--font-display); font-size: 1.3rem; margin: 0; line-height: 1.2; }
+.side p { margin: 0; color: var(--muted); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.stats div { background: var(--surface); padding: 10px 12px; display: grid; gap: 2px; }
+.stats span { font: 600 10.5px/1.2 var(--font-body); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.stats strong { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tiers { display: flex; flex-wrap: wrap; gap: 6px; }
+.tier { font: 600 12px/1 var(--font-mono); padding: 5px 8px; border-radius: 5px; color: var(--area-ink); background: var(--area); }
+.legend { display: grid; gap: 8px; font-size: 13px; color: var(--muted); }
+.legend div { display: flex; align-items: center; gap: 10px; }
+.legend svg { flex: none; }
+.foot { color: var(--muted); font-size: 13px; max-width: 80ch; display: grid; gap: 6px; }
+.foot p { margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Forge Array Layouts</h1>
+    <p class="lede">Optimal Forge of Luminance placements for one <b>65 × 65</b> build region, solved exactly as an integer program. Projection areas stay inside the region; forges may sit outside it. Every forge burns <b>6 Xiragen/min</b>, so efficiency is items produced per Xiragen.</p>
+  </header>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Layout</th><th>Forge</th><th>Forges</th><th>Xiragen/min</th><th>Output/min</th><th>Items per Xiragen</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <section class="stage">
+    <div class="diagram"><svg id="plot" role="img" aria-label="Layout diagram"></svg></div>
+    <aside class="side">
+      <div><h2 id="title"></h2><p id="note"></p></div>
+      <div class="stats" id="stats"></div>
+      <div class="tiers" id="tiers" aria-label="Area tiers"></div>
+      <div class="legend">
+        <div><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="2" width="18" height="18" rx="2" fill="var(--area)"/></svg>Projection area, labelled with its tier and items/min</div>
+        <div><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="2" width="18" height="18" rx="2" fill="var(--forge)" stroke="var(--forge-edge)"/></svg>Forge (B = Bipolar, F = single)</div>
+        <div><svg width="22" height="22" viewBox="0 0 22 22"><path d="M2 11h14" stroke="var(--pole)" stroke-width="2.5"/><path d="M14 6l6 5-6 5z" fill="var(--pole)"/></svg>Projection into an area</div>
+        <div><svg width="22" height="22" viewBox="0 0 22 22"><path d="M2 11h14" stroke="var(--waste)" stroke-width="2.5" stroke-dasharray="3 3"/><path d="M14 6l6 5-6 5z" fill="var(--waste)"/></svg>Wasted pole, lands on nothing</div>
+        <div><svg width="22" height="22" viewBox="0 0 22 22"><rect x="2" y="2" width="18" height="18" fill="none" stroke="var(--muted)" stroke-dasharray="3 2"/></svg>65 × 65 build region</div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="foot">
+    <p>Drawn to scale: each square is 5 × 5 tiles, and a projection lands exactly 9 tiles from its forge, so everything that stacks sits on a 9-tile lattice. An area converts 150 × chance items per minute: 30 per projection up to T3, 150 at T4.</p>
+    <p>Belt and Xiragen pipe routing are not modelled; every projected tile is assumed usable. Areas take whichever array type (L or T) the plan needs.</p>
+  </div>
+</div>
+
+<script>
+const LAYOUTS = [{"name":"Single diagonal","kind":"bipolar","note":"Best items per Xiragen. Your staircase, cut to the 7 diagonal cells that fit.","forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"]],"areas":[[0,0,2],[1,1,4],[2,2,4],[3,3,4],[4,4,4],[5,5,4],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true]],"F":12,"out":870,"xiragen":72,"ipx":12.083},{"name":"Three diagonals","kind":"bipolar","note":"Twice the output for a small efficiency cost: three independent chains side by side.","forges":[[1,0,"SW"],[0,1,"NE"],[2,1,"SW"],[1,2,"NE"],[3,2,"SW"],[2,3,"NE"],[4,3,"SW"],[3,4,"NE"],[5,4,"SW"],[4,5,"NE"],[6,5,"SW"],[5,6,"NE"],[4,0,"SW"],[3,1,"NE"],[5,1,"SW"],[4,2,"NE"],[6,2,"SW"],[5,3,"NE"],[1,3,"SW"],[0,4,"NE"],[2,4,"SW"],[1,5,"NE"],[3,5,"SW"],[2,6,"NE"]],"areas":[[0,0,2],[0,3,2],[1,1,4],[1,4,4],[2,2,4],[2,5,4],[3,0,2],[3,3,4],[3,6,2],[4,1,4],[4,4,4],[5,2,4],[5,5,4],[6,3,2],[6,6,2]],"poles":[[1,0,"S",true],[1,0,"W",true],[0,1,"N",true],[0,1,"E",true],[2,1,"S",true],[2,1,"W",true],[1,2,"N",true],[1,2,"E",true],[3,2,"S",true],[3,2,"W",true],[2,3,"N",true],[2,3,"E",true],[4,3,"S",true],[4,3,"W",true],[3,4,"N",true],[3,4,"E",true],[5,4,"S",true],[5,4,"W",true],[4,5,"N",true],[4,5,"E",true],[6,5,"S",true],[6,5,"W",true],[5,6,"N",true],[5,6,"E",true],[4,0,"S",true],[4,0,"W",true],[3,1,"N",true],[3,1,"E",true],[5,1,"S",true],[5,1,"W",true],[4,2,"N",true],[4,2,"E",true],[6,2,"S",true],[6,2,"W",true],[5,3,"N",true],[5,3,"E",true],[1,3,"S",true],[1,3,"W",true],[0,4,"N",true],[0,4,"E",true],[2,4,"S",true],[2,4,"W",true],[1,5,"N",true],[1,5,"E",true],[3,5,"S",true],[3,5,"W",true],[2,6,"N",true],[2,6,"E",true]],"F":24,"out":1710,"xiragen":144,"ipx":11.875},{"name":"Dense grid","kind":"bipolar","note":"Most output in the region. Every area is T4, but end caps waste a pole each.","forges":[[0,-1,"ES"],[3,-1,"ES"],[6,-1,"ES"],[-1,0,"ES"],[1,0,"SW"],[2,0,"ES"],[4,0,"SW"],[5,0,"ES"],[7,0,"SW"],[0,1,"NE"],[1,1,"ES"],[3,1,"WN"],[4,1,"ES"],[6,1,"WN"],[0,2,"ES"],[2,2,"WN"],[3,2,"ES"],[5,2,"WN"],[6,2,"SW"],[-1,3,"ES"],[1,3,"WN"],[2,3,"ES"],[4,3,"WN"],[5,3,"ES"],[7,3,"SW"],[0,4,"NE"],[1,4,"ES"],[3,4,"WN"],[4,4,"ES"],[6,4,"WN"],[0,5,"ES"],[2,5,"WN"],[3,5,"ES"],[5,5,"WN"],[6,5,"SW"],[-1,6,"ES"],[1,6,"WN"],[2,6,"NE"],[4,6,"WN"],[5,6,"NE"],[7,6,"SW"],[0,7,"WN"],[3,7,"WN"],[6,7,"WN"]],"areas":[[0,0,4],[0,3,4],[0,6,4],[1,2,4],[1,5,4],[2,1,4],[2,4,4],[3,0,4],[3,3,4],[3,6,4],[4,2,4],[4,5,4],[5,1,4],[5,4,4],[6,0,4],[6,3,4],[6,6,4]],"poles":[[0,-1,"E",false],[0,-1,"S",true],[3,-1,"E",false],[3,-1,"S",true],[6,-1,"E",false],[6,-1,"S",true],[-1,0,"E",true],[-1,0,"S",false],[1,0,"S",false],[1,0,"W",true],[2,0,"E",true],[2,0,"S",true],[4,0,"S",false],[4,0,"W",true],[5,0,"E",true],[5,0,"S",true],[7,0,"S",false],[7,0,"W",true],[0,1,"N",true],[0,1,"E",false],[1,1,"E",true],[1,1,"S",true],[3,1,"W",true],[3,1,"N",true],[4,1,"E",true],[4,1,"S",true],[6,1,"W",true],[6,1,"N",true],[0,2,"E",true],[0,2,"S",true],[2,2,"W",true],[2,2,"N",true],[3,2,"E",true],[3,2,"S",true],[5,2,"W",true],[5,2,"N",true],[6,2,"S",true],[6,2,"W",false],[-1,3,"E",true],[-1,3,"S",false],[1,3,"W",true],[1,3,"N",true],[2,3,"E",true],[2,3,"S",true],[4,3,"W",true],[4,3,"N",true],[5,3,"E",true],[5,3,"S",true],[7,3,"S",false],[7,3,"W",true],[0,4,"N",true],[0,4,"E",false],[1,4,"E",true],[1,4,"S",true],[3,4,"W",true],[3,4,"N",true],[4,4,"E",true],[4,4,"S",true],[6,4,"W",true],[6,4,"N",true],[0,5,"E",true],[0,5,"S",true],[2,5,"W",true],[2,5,"N",true],[3,5,"E",true],[3,5,"S",true],[5,5,"W",true],[5,5,"N",true],[6,5,"S",true],[6,5,"W",false],[-1,6,"E",true],[-1,6,"S",false],[1,6,"W",true],[1,6,"N",true],[2,6,"N",false],[2,6,"E",true],[4,6,"W",true],[4,6,"N",true],[5,6,"N",false],[5,6,"E",true],[7,6,"S",false],[7,6,"W",true],[0,7,"W",false],[0,7,"N",true],[3,7,"W",false],[3,7,"N",true],[6,7,"W",false],[6,7,"N",true]],"F":44,"out":2550,"xiragen":264,"ipx":9.659},{"name":"Plus shapes","kind":"single","note":"Best for single forges: four forges around each area always reach T4.","forges":[[0,-1,"S"],[5,-1,"S"],[-1,0,"E"],[1,0,"W"],[3,0,"S"],[4,0,"E"],[6,0,"W"],[0,1,"N"],[1,1,"S"],[2,1,"E"],[4,1,"W"],[5,1,"N"],[6,1,"S"],[0,2,"E"],[2,2,"W"],[3,2,"N"],[5,2,"E"],[7,2,"W"],[0,3,"S"],[1,3,"N"],[3,3,"S"],[6,3,"N"],[-1,4,"E"],[1,4,"W"],[2,4,"E"],[4,4,"W"],[6,4,"S"],[0,5,"N"],[1,5,"S"],[3,5,"N"],[4,5,"S"],[5,5,"E"],[7,5,"W"],[0,6,"E"],[2,6,"W"],[3,6,"E"],[5,6,"W"],[6,6,"N"],[1,7,"N"],[4,7,"N"]],"areas":[[0,0,4],[0,4,4],[1,2,4],[1,6,4],[3,1,4],[3,4,4],[4,6,4],[5,0,4],[6,2,4],[6,5,4]],"poles":[[0,-1,"S",true],[5,-1,"S",true],[-1,0,"E",true],[1,0,"W",true],[3,0,"S",true],[4,0,"E",true],[6,0,"W",true],[0,1,"N",true],[1,1,"S",true],[2,1,"E",true],[4,1,"W",true],[5,1,"N",true],[6,1,"S",true],[0,2,"E",true],[2,2,"W",true],[3,2,"N",true],[5,2,"E",true],[7,2,"W",true],[0,3,"S",true],[1,3,"N",true],[3,3,"S",true],[6,3,"N",true],[-1,4,"E",true],[1,4,"W",true],[2,4,"E",true],[4,4,"W",true],[6,4,"S",true],[0,5,"N",true],[1,5,"S",true],[3,5,"N",true],[4,5,"S",true],[5,5,"E",true],[7,5,"W",true],[0,6,"E",true],[2,6,"W",true],[3,6,"E",true],[5,6,"W",true],[6,6,"N",true],[1,7,"N",true],[4,7,"N",true]],"F":40,"out":1500,"xiragen":240,"ipx":6.25},{"name":"Packed singles","kind":"single","note":"Most output from single forges; the leftover gaps take T1 to T3 areas.","forges":[[0,-1,"S"],[2,-1,"S"],[6,-1,"S"],[-1,0,"E"],[1,0,"E"],[3,0,"W"],[4,0,"S"],[5,0,"E"],[7,0,"W"],[0,1,"N"],[1,1,"S"],[2,1,"N"],[3,1,"E"],[5,1,"W"],[6,1,"N"],[0,2,"E"],[2,2,"W"],[3,2,"S"],[4,2,"N"],[5,2,"E"],[7,2,"W"],[0,3,"S"],[1,3,"N"],[2,3,"E"],[4,3,"W"],[5,3,"S"],[7,3,"W"],[-1,4,"E"],[1,4,"W"],[2,4,"S"],[3,4,"N"],[4,4,"E"],[6,4,"W"],[0,5,"N"],[1,5,"E"],[3,5,"W"],[4,5,"S"],[5,5,"N"],[7,5,"W"],[-1,6,"E"],[2,6,"N"],[3,6,"E"],[5,6,"W"],[7,6,"W"],[0,7,"N"],[1,7,"N"],[4,7,"N"],[6,7,"N"]],"areas":[[0,0,3],[0,4,4],[0,6,2],[1,2,4],[1,6,1],[2,0,4],[2,5,4],[3,3,4],[4,1,4],[4,6,4],[5,4,4],[6,0,4],[6,2,2],[6,3,1],[6,5,1],[6,6,2]],"poles":[[0,-1,"S",true],[2,-1,"S",true],[6,-1,"S",true],[-1,0,"E",true],[1,0,"E",true],[3,0,"W",true],[4,0,"S",true],[5,0,"E",true],[7,0,"W",true],[0,1,"N",true],[1,1,"S",true],[2,1,"N",true],[3,1,"E",true],[5,1,"W",true],[6,1,"N",true],[0,2,"E",true],[2,2,"W",true],[3,2,"S",true],[4,2,"N",true],[5,2,"E",true],[7,2,"W",true],[0,3,"S",true],[1,3,"N",true],[2,3,"E",true],[4,3,"W",true],[5,3,"S",true],[7,3,"W",true],[-1,4,"E",true],[1,4,"W",true],[2,4,"S",true],[3,4,"N",true],[4,4,"E",true],[6,4,"W",true],[0,5,"N",true],[1,5,"E",true],[3,5,"W",true],[4,5,"S",true],[5,5,"N",true],[7,5,"W",true],[-1,6,"E",true],[2,6,"N",true],[3,6,"E",true],[5,6,"W",true],[7,6,"W",true],[0,7,"N",true],[1,7,"N",true],[4,7,"N",true],[6,7,"N",true]],"F":48,"out":1710,"xiragen":288,"ipx":5.938}];
+const PITCH = 9, SIZE = 5, OFF = 3, REGION = 65;
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+const fmt = n => n.toLocaleString('en');
+const DIRS = { E: [1, 0], W: [-1, 0], N: [0, -1], S: [0, 1] };
+const bestIpx = Math.max(...LAYOUTS.map(l => l.ipx));
+
+const rows = document.getElementById('rows');
+rows.innerHTML = LAYOUTS.map((l, i) => `
+  <tr tabindex="0" data-i="${i}" aria-selected="false">
+    <td class="name">${l.name}</td>
+    <td><span class="kind ${l.kind}">${l.kind === 'bipolar' ? 'Bipolar' : 'Single'}</span></td>
+    <td class="num">${l.F}</td>
+    <td class="num">${l.xiragen}</td>
+    <td class="num">${fmt(l.out)}</td>
+    <td class="num"><span class="eff ${l.ipx === bestIpx ? 'best' : ''}">${l.ipx.toFixed(2)}<i><b style="width:${(l.ipx / 12.5 * 100).toFixed(1)}%"></b></i></span></td>
+  </tr>`).join('');
+
+function tileOf(c) { return OFF + PITCH * c; }
+
+function draw(l) {
+  const svg = document.getElementById('plot');
+  const min = -9, max = REGION + 9, span = max - min;
+  svg.setAttribute('viewBox', `${min} ${min} ${span} ${span}`);
+  let s = '';
+  // region and tile grid
+  s += `<rect x="0" y="0" width="${REGION}" height="${REGION}" fill="var(--region)"/>`;
+  let grid = '';
+  for (let t = 1; t < REGION; t++) grid += `M${t} 0V${REGION}M0 ${t}H${REGION}`;
+  s += `<path d="${grid}" stroke="var(--tile)" stroke-width="0.08" fill="none"/>`;
+  s += `<rect x="0" y="0" width="${REGION}" height="${REGION}" fill="none" stroke="var(--muted)" stroke-width="0.22" stroke-dasharray="0.9 0.6"/>`;
+  // poles under the boxes
+  l.poles.forEach(([x, y, d, ok]) => {
+    const [dx, dy] = DIRS[d];
+    const cx = tileOf(x) + SIZE / 2, cy = tileOf(y) + SIZE / 2;
+    const x1 = cx + dx * (SIZE / 2 + 0.3), y1 = cy + dy * (SIZE / 2 + 0.3);
+    const x2 = cx + dx * (PITCH - SIZE / 2 - 0.4), y2 = cy + dy * (PITCH - SIZE / 2 - 0.4);
+    const col = ok ? 'var(--pole)' : 'var(--waste)';
+    const hx = x2 - dx * 1.3, hy = y2 - dy * 1.3, px = -dy * 0.95, py = dx * 0.95;
+    s += `<path d="M${x1} ${y1}L${hx} ${hy}" stroke="${col}" stroke-width="0.55" ${ok ? '' : 'stroke-dasharray="0.8 0.6"'} fill="none"/>`;
+    s += `<path d="M${x2} ${y2}L${hx + px} ${hy + py}L${hx - px} ${hy - py}Z" fill="${col}"/>`;
+  });
+  // areas
+  l.areas.forEach(([x, y, k]) => {
+    const tx = tileOf(x), ty = tileOf(y), rate = k === 4 ? 150 : 30 * k;
+    const op = [0, 0.38, 0.55, 0.75, 1][k];
+    s += `<g><title>T${k}: ${k} stacked projection${k === 1 ? '' : 's'}, ${rate} items/min</title>
+      <rect x="${tx}" y="${ty}" width="${SIZE}" height="${SIZE}" rx="0.35" fill="var(--area)" fill-opacity="${op}"/>
+      <text x="${tx + SIZE / 2}" y="${ty + 2.45}" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="1.75" fill="${k >= 3 ? 'var(--area-ink)' : 'var(--fg)'}">T${k}</text>
+      <text x="${tx + SIZE / 2}" y="${ty + 4.05}" text-anchor="middle" font-family="var(--font-mono)" font-size="1.15" fill="${k >= 3 ? 'var(--area-ink)' : 'var(--fg)'}">${rate}/min</text></g>`;
+  });
+  // forges
+  l.forges.forEach(([x, y, ds]) => {
+    const tx = tileOf(x), ty = tileOf(y);
+    s += `<g><title>${l.kind === 'bipolar' ? 'Bipolar Forge' : 'Forge of Luminance'} projecting ${ds.split('').map(d => ({E: 'east', W: 'west', N: 'north', S: 'south'})[d]).join(' and ')}</title>
+      <rect x="${tx + 0.15}" y="${ty + 0.15}" width="${SIZE - 0.3}" height="${SIZE - 0.3}" rx="0.45" fill="var(--forge)" stroke="var(--forge-edge)" stroke-width="0.25"/>
+      <path d="M${tx + 2.5} ${ty + 1}L${tx + 4} ${ty + 2.5}L${tx + 2.5} ${ty + 4}L${tx + 1} ${ty + 2.5}Z" fill="none" stroke="var(--forge-ink)" stroke-width="0.22" opacity="0.55"/>
+      <text x="${tx + 2.5}" y="${ty + 3.1}" text-anchor="middle" font-family="var(--font-display)" font-weight="700" font-size="1.6" fill="var(--forge-ink)">${l.kind === 'bipolar' ? 'B' : 'F'}</text></g>`;
+  });
+  svg.innerHTML = s;
+  svg.setAttribute('aria-label', `${l.name}: ${l.F} forges, ${l.areas.length} areas`);
+}
+
+function select(i) {
+  const l = LAYOUTS[i];
+  rows.querySelectorAll('tr').forEach(r => r.setAttribute('aria-selected', String(+r.dataset.i === i)));
+  document.getElementById('title').textContent = l.name;
+  document.getElementById('note').textContent = l.note;
+  const wasted = l.poles.filter(p => !p[3]).length;
+  document.getElementById('stats').innerHTML = [
+    ['Forges', `${l.F} ${l.kind === 'bipolar' ? 'Bipolar' : 'single'}`],
+    ['Xiragen', `${l.xiragen}/min`],
+    ['Output', `${fmt(l.out)}/min`],
+    ['Per Xiragen', l.ipx.toFixed(2)],
+    ['Areas', String(l.areas.length)],
+    ['Wasted poles', String(wasted)],
+  ].map(([k, v]) => `<div><span>${k}</span><strong>${v}</strong></div>`).join('');
+  const counts = {};
+  l.areas.forEach(a => { counts[a[2]] = (counts[a[2]] || 0) + 1; });
+  document.getElementById('tiers').innerHTML = Object.keys(counts).sort((a, b) => b - a)
+    .map(k => `<span class="tier" style="opacity:${[0, 0.55, 0.7, 0.85, 1][k]}">${counts[k]} × T${k}</span>`).join('');
+  draw(l);
+  const h = '#' + slug(l.name);
+  if (location.hash !== h) history.replaceState(null, '', h);
+}
+
+rows.addEventListener('click', e => { const r = e.target.closest('tr'); if (r) select(+r.dataset.i); });
+rows.addEventListener('keydown', e => {
+  const r = e.target.closest('tr'); if (!r) return;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(+r.dataset.i); }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const n = Math.max(0, Math.min(LAYOUTS.length - 1, +r.dataset.i + (e.key === 'ArrowDown' ? 1 : -1)));
+    select(n); rows.querySelector(`tr[data-i="${n}"]`).focus();
+  }
+});
+function fromHash() {
+  const i = LAYOUTS.findIndex(l => '#' + slug(l.name) === location.hash);
+  select(i >= 0 ? i : 0);
+}
+window.addEventListener('hashchange', fromHash);
+fromHash();
+</script>
+</body>
+</html>
